@@ -4,32 +4,25 @@ Django settings for complaint_system project.
 
 from pathlib import Path
 import os
+import dj_database_url  # Make sure to install this: pip install dj-database-url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ==================== SECURITY WARNING: Keep these secret! ====================
-# SECRET_KEY - In production, this will be set via environment variable
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-your-secret-key-here-change-in-production')
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-your-local-dev-key-here')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False  # CRITICAL: Set to False in production!
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-# ==================== ALLOWED HOSTS ====================
-# PythonAnywhere will set this environment variable automatically
-ALLOWED_HOSTS = ['yourusername.pythonanywhere.com', 'localhost', '127.0.0.1']
-
-# If you want to use the same code locally and on PythonAnywhere
-if 'PYTHONANYWHERE_DOMAIN' in os.environ:
-    # We're on PythonAnywhere
-    ALLOWED_HOSTS = [os.environ['PYTHONANYWHERE_DOMAIN']]
-    DEBUG = False
+# Render.com host configuration
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS = [RENDER_EXTERNAL_HOSTNAME, 'localhost', '127.0.0.1']
 else:
-    # We're on local machine
-    ALLOWED_HOSTS = ['localhost', '127.0.0.1', '*']
-    DEBUG = True
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.onrender.com']
 
-# ==================== APPLICATION DEFINITION ====================
+# Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -40,10 +33,9 @@ INSTALLED_APPS = [
     'complaints',  # Our app
 ]
 
-# ==================== MIDDLEWARE ====================
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # Added for static files in production
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # For serving static files
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -54,7 +46,6 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'complaint_system.urls'
 
-# ==================== TEMPLATES ====================
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -73,16 +64,26 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'complaint_system.wsgi.application'
 
-# ==================== DATABASE ====================
-# SQLite for free tier (MySQL/PostgreSQL are paid on PythonAnywhere)
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Database
+# Use SQLite locally, PostgreSQL on Render
+if 'DATABASE_URL' in os.environ:
+    # On Render, use PostgreSQL
+    DATABASES = {
+        'default': dj_database_url.config(
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
-}
+else:
+    # Local development with SQLite
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
-# ==================== PASSWORD VALIDATION ====================
+# Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -98,45 +99,40 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# ==================== INTERNATIONALIZATION ====================
+# Internationalization
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Asia/Kolkata'
 USE_I18N = True
 USE_TZ = True
 
-# ==================== STATIC FILES (CSS, JavaScript, Images) ====================
+# Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'complaints/static')]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# WhiteNoise compression and caching (for production)
+# WhiteNoise compression and caching
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# ==================== MEDIA FILES (User Uploads) ====================
+# Media files (Uploaded files)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# ==================== DEFAULT PRIMARY KEY FIELD TYPE ====================
+# Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# ==================== LOGIN URLs ====================
+# Login URLs
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
-# ==================== SECURITY SETTINGS FOR PRODUCTION ====================
+# Security settings for production
 if not DEBUG:
-    # HTTPS settings
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    
-    # HSTS (HTTP Strict Transport Security)
-    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+    SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
-    
-    # Other security settings
-    SECURE_CONTENT_TYPE_NOSNIFF = True
-    SECURE_BROWSER_XSS_FILTER = True
-    X_FRAME_OPTIONS = 'DENY'
