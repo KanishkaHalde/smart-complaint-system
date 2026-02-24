@@ -1,0 +1,4586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Complaint Management System</title>
+    {% load static %}
+    <style>
+        /* PASTE YOUR ENTIRE CSS HERE - exactly as in your original file */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        /* Login Modal Styles */
+        .login-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            animation: slideUp 0.3s;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .login-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        .login-tab {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: #f0f0f0;
+            color: #333;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .login-tab.active {
+            background: #667eea;
+            color: white;
+        }
+        .login-form {
+            display: none;
+        }
+        .login-form.active {
+            display: block;
+        }
+        .register-form {
+            display: none;
+        }
+        .register-form.active {
+            display: block;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+        .input-group input:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        .login-btn, .register-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .login-btn:hover, .register-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+        .switch-form {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+        }
+        .switch-form a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .switch-form a:hover {
+            text-decoration: underline;
+        }
+        .admin-login-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: #ff9800;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            z-index: 1001;
+            transition: all 0.3s;
+        }
+        .admin-login-btn:hover {
+            background: #f57c00;
+            transform: translateY(-2px);
+        }
+        /* Notification Bell */
+        .notification-bell {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: #667eea;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1001;
+            font-size: 1.5em;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s;
+        }
+        .notification-bell:hover {
+            transform: scale(1.1);
+        }
+        .notification-bell.has-notifications::after {
+            content: '';
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 12px;
+            height: 12px;
+            background: #ff4757;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+        .notification-panel {
+            position: fixed;
+            top: 80px;
+            left: 20px;
+            width: 350px;
+            max-height: 400px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            z-index: 1000;
+            display: none;
+            overflow: hidden;
+        }
+        .notification-panel.active {
+            display: block;
+            animation: slideDown 0.3s;
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .notification-header {
+            padding: 20px;
+            background: #667eea;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .notification-header h3 {
+            margin: 0;
+        }
+        .clear-notifications {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .notification-list {
+            max-height: 320px;
+            overflow-y: auto;
+        }
+        .notification-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .notification-item:hover {
+            background: #f8f9fa;
+        }
+        .notification-item.unread {
+            background: #f0f7ff;
+        }
+        .notification-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .notification-message {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+        .notification-time {
+            color: #999;
+            font-size: 0.8em;
+        }
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .logo {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #333;
+            font-weight: 600;
+        }
+        .user-icon {
+            background: #667eea;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .logout-btn {
+            padding: 8px 15px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .logout-btn:hover {
+            background: #c82333;
+        }
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+        .nav-btn {
+            padding: 10px 20px;
+            border: none;
+            background: none;
+            color: #333;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            border-radius: 8px;
+        }
+        .nav-btn:hover {
+            background: #f0f0f0;
+        }
+        .nav-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+        .page {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+        .page.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Home Page Styles */
+        .hero {
+            background: white;
+            border-radius: 20px;
+            padding: 60px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            margin-bottom: 30px;
+        }
+        .hero h1 {
+            font-size: 3em;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        .hero p {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+        .feature-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        .feature-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+        .feature-card h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .cta-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+        .cta-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        /* Dashboard Styles */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .chart-container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+        .dashboard-chart {
+            width: 100%;
+            height: 300px;
+            margin: 20px 0;
+            position: relative;
+        }
+        .chart-placeholder {
+            width: 100%;
+            height: 300px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+        }
+        .chart-placeholder .icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+        /* Complaint Form Styles */
+        .form-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+        }
+        .step {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border-left: 5px solid #667eea;
+        }
+        .step-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .step-number {
+            background: #667eea;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .step-title {
+            font-size: 1.3em;
+            color: #333;
+            font-weight: 600;
+        }
+        .language-selector {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .lang-btn {
+            padding: 12px 30px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .lang-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        .lang-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        .control-btn {
+            padding: 15px 40px;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0 auto;
+        }
+        .start-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .stop-btn {
+            background: #dc3545;
+            color: white;
+        }
+        .control-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .transcript-box {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 120px;
+            margin-top: 15px;
+            font-size: 1.1em;
+            line-height: 1.6;
+            color: #333;
+        }
+        .transcript-box.empty {
+            color: #999;
+            font-style: italic;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .info-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+        }
+        .info-label {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+        .info-value {
+            color: #333;
+            font-size: 1.1em;
+        }
+        .email-draft {
+            background: #f8f9fa;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 15px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            line-height: 1.8;
+        }
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        .status-listening {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-idle {
+            background: #e0e0e0;
+            color: #666;
+        }
+        .pulse {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #28a745;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+        .copy-btn, .submit-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+        .copy-btn:hover, .submit-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        .submit-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-size: 1.1em;
+            padding: 15px 40px;
+        }
+        /* File Upload Styles */
+        .file-upload-container {
+            margin-top: 20px;
+        }
+        .file-upload-btn {
+            padding: 12px 25px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+        .file-upload-btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+        .file-preview-container {
+            margin-top: 20px;
+        }
+        .file-preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .file-preview-item {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .file-preview-item img {
+            max-width: 100%;
+            max-height: 100px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+        .file-name {
+            font-size: 0.9em;
+            color: #333;
+            word-break: break-all;
+            margin-bottom: 5px;
+        }
+        .file-size {
+            font-size: 0.8em;
+            color: #666;
+        }
+        .remove-file {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+        .file-view-btn, .file-download-btn {
+            padding: 3px 8px;
+            margin: 2px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.75em;
+            font-weight: 600;
+        }
+        .file-view-btn {
+            background: #667eea;
+            color: white;
+        }
+        .file-download-btn {
+            background: #28a745;
+            color: white;
+        }
+        .file-view-btn:hover {
+            background: #5a6fd8;
+        }
+        .file-download-btn:hover {
+            background: #218838;
+        }
+        /* Location Styles */
+        .location-container {
+            margin-top: 15px;
+        }
+        .location-info {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            margin-top: 10px;
+        }
+        .location-btn {
+            padding: 10px 20px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+        .location-btn:hover {
+            background: #218838;
+        }
+        .location-btn.loading {
+            background: #6c757d;
+        }
+        .location-coordinates {
+            font-family: monospace;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+        /* Tracking Styles */
+        .complaint-list {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .complaint-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 5px solid #667eea;
+            transition: all 0.3s;
+        }
+        .complaint-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .complaint-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .complaint-id {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 1.1em;
+        }
+        .status-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status-progress {
+            background: #cce5ff;
+            color: #004085;
+        }
+        .status-resolved {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-reopened {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .complaint-details {
+            color: #666;
+            margin-bottom: 10px;
+            max-height: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .complaint-meta {
+            display: flex;
+            gap: 20px;
+            font-size: 0.9em;
+            color: #999;
+            flex-wrap: wrap;
+        }
+        .search-bar {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        .search-input {
+            flex: 1;
+            padding: 12px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 1em;
+        }
+        .filter-btn {
+            padding: 10px 20px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .filter-btn:hover, .filter-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        .empty-state-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: center;
+        }
+        /* Feedback & Rating Styles */
+        .feedback-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px solid #667eea;
+        }
+        .rating-container {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            justify-content: center;
+        }
+        .star {
+            font-size: 2em;
+            cursor: pointer;
+            color: #ddd;
+            transition: all 0.2s;
+        }
+        .star:hover,
+        .star.active {
+            color: #ffc107;
+            transform: scale(1.1);
+        }
+        .feedback-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            margin: 10px 0;
+            font-size: 1em;
+            resize: vertical;
+        }
+        .feedback-input:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        .submit-feedback-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .submit-feedback-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        .reopen-btn {
+            background: #ff9800;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-left: 10px;
+            transition: all 0.3s;
+        }
+        .reopen-btn:hover {
+            background: #f57c00;
+            transform: translateY(-2px);
+        }
+        .rating-display {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            margin-left: 10px;
+        }
+        .rating-display .star-filled {
+            color: #ffc107;
+        }
+        /* Admin Panel Styles - Fixed */
+        .admin-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow-x: auto;
+        }
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .admin-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .admin-action-btn {
+            padding: 8px 15px;
+            border: none;
+            background: #667eea;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+        .admin-action-btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+        /* Improved Table Styles */
+        .table-responsive {
+            overflow-x: auto;
+            margin: 20px 0;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+        }
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 900px;
+            font-size: 0.9em;
+        }
+        .admin-table th {
+            background: #f8f9fa;
+            padding: 12px 10px;
+            text-align: left;
+            border-bottom: 2px solid #e0e0e0;
+            color: #667eea;
+            font-weight: 600;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        .admin-table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #e0e0e0;
+            vertical-align: middle;
+            word-wrap: break-word;
+        }
+        .admin-table tr:hover {
+            background: #f8f9fa;
+        }
+        /* Optimized Column Widths */
+        .admin-table th:nth-child(1), .admin-table td:nth-child(1) { width: 90px; min-width: 90px; font-weight: 600; color: #667eea; }
+        .admin-table th:nth-child(2), .admin-table td:nth-child(2) { width: 100px; min-width: 100px; }
+        .admin-table th:nth-child(3), .admin-table td:nth-child(3) { width: 120px; min-width: 120px; }
+        .admin-table th:nth-child(4), .admin-table td:nth-child(4) { width: 80px; min-width: 80px; }
+        .admin-table th:nth-child(5), .admin-table td:nth-child(5) { width: 180px; min-width: 180px; }
+        .admin-table th:nth-child(6), .admin-table td:nth-child(6) { width: 70px; min-width: 70px; }
+        .admin-table th:nth-child(7), .admin-table td:nth-child(7) { width: 140px; min-width: 140px; font-size: 0.85em; }
+        .admin-table th:nth-child(8), .admin-table td:nth-child(8) { width: 90px; min-width: 90px; }
+        .admin-table th:nth-child(9), .admin-table td:nth-child(9) { width: 100px; min-width: 100px; white-space: nowrap; }
+        /* Description Column Styling */
+        .complaint-description {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            cursor: pointer;
+            display: block;
+            max-width: 180px;
+            color: #333;
+            font-size: 0.9em;
+        }
+        .complaint-description:hover {
+            color: #667eea;
+            text-decoration: underline;
+        }
+        /* View Details Button */
+        .view-details-btn {
+            padding: 4px 10px;
+            background: #17a2b8;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.75em;
+            margin-top: 5px;
+            transition: all 0.2s;
+            display: inline-block;
+        }
+        .view-details-btn:hover {
+            background: #138496;
+        }
+        /* Urgency Badges */
+        .urgency-high {
+            color: #dc3545;
+            font-weight: bold;
+            font-size: 0.85em;
+            padding: 3px 8px;
+            background: #ffebee;
+            border-radius: 12px;
+            display: inline-block;
+        }
+        .urgency-normal {
+            color: #28a745;
+            font-size: 0.85em;
+            padding: 3px 8px;
+            background: #e8f5e9;
+            border-radius: 12px;
+            display: inline-block;
+        }
+        /* Status Select Dropdown */
+        .status-select {
+            padding: 5px 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            background: white;
+            cursor: pointer;
+            width: 100%;
+            max-width: 90px;
+            font-size: 0.85em;
+        }
+        /* Actions Container */
+        .actions-container {
+            display: flex;
+            gap: 5px;
+            justify-content: flex-start;
+        }
+        .update-btn, .delete-btn {
+            padding: 5px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.8em;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .update-btn {
+            background: #28a745;
+            color: white;
+        }
+        .update-btn:hover {
+            background: #218838;
+        }
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+        }
+        .delete-btn:hover {
+            background: #c82333;
+        }
+        /* Admin Stats Summary */
+        .admin-stats-summary {
+            display: flex;
+            gap: 20px;
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .stat-value {
+            color: #667eea;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        /* Complaint Details Modal Styles */
+        .complaint-details-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+        }
+        .complaint-details-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            animation: slideUp 0.3s;
+        }
+        .complaint-details-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .complaint-details-header h2 {
+            color: #667eea;
+            margin: 0;
+        }
+        .close-modal-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .close-modal-btn:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+        .complaint-details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .complaint-detail-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid #667eea;
+        }
+        .complaint-detail-label {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .complaint-detail-value {
+            color: #333;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+        .email-draft-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            margin-top: 20px;
+            border: 2px solid #667eea;
+        }
+        .email-draft-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .email-draft-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            line-height: 1.8;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+        }
+        /* File Modal Styles */
+        .file-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 4000;
+        }
+        .file-modal.active {
+            display: flex;
+        }
+        .file-modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        .file-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .file-modal-header h3 {
+            color: #667eea;
+            margin: 0;
+        }
+        .file-modal-close {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .file-modal-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .file-modal-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            border: 2px solid #e0e0e0;
+        }
+        .file-modal-item img {
+            max-width: 100%;
+            max-height: 150px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .file-modal-item img:hover {
+            transform: scale(1.05);
+        }
+        .file-modal-item .file-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+        .file-modal-item .file-name {
+            font-weight: 600;
+            color: #333;
+            word-break: break-all;
+            margin-bottom: 5px;
+        }
+        .file-modal-item .file-size {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .file-modal-item .file-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .file-modal-item .file-download {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        .file-modal-item .file-view {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        /* Image View Modal */
+        .image-view-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 5000;
+        }
+        .image-view-modal.active {
+            display: flex;
+        }
+        .image-view-content {
+            position: relative;
+            max-width: 90vw;
+            max-height: 90vh;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+        }
+        .image-view-content img {
+            max-width: 100%;
+            max-height: 70vh;
+            object-fit: contain;
+            border-radius: 8px;
+            display: block;
+            margin: 0 auto;
+        }
+        .close-image-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            z-index: 5001;
+        }
+        .close-image-btn:hover {
+            background: #c82333;
+        }
+        .image-info {
+            margin-top: 10px;
+            text-align: center;
+            color: #333;
+            font-weight: 600;
+        }
+        .image-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        .image-controls button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .image-controls button:hover {
+            background: #5a6fd8;
+        }
+        /* Export Buttons */
+        .export-btn {
+            background: #28a745;
+        }
+        .export-btn:hover {
+            background: #218838;
+        }
+        /* New Admin Dashboard Styles */
+        .admin-dashboard {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            margin-bottom: 30px;
+        }
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .dashboard-header h2 {
+            color: #667eea;
+            margin: 0;
+        }
+        .date-range {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .date-input {
+            padding: 8px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 0.9em;
+        }
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .refresh-btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card-large {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+        .stat-card-large .number {
+            font-size: 3em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .stat-card-large .label {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        .chart-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        .chart-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+        }
+        .chart-card h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .chart-card h3 span {
+            font-size: 1.5em;
+        }
+        .pie-chart-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        .pie-chart {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: conic-gradient(#667eea 0deg 120deg, #28a745 120deg 240deg, #ffc107 240deg 300deg, #dc3545 300deg 360deg);
+            margin-bottom: 20px;
+        }
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 4px;
+        }
+        .bar-chart {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .bar-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .bar-label {
+            width: 100px;
+            font-weight: 600;
+            color: #333;
+        }
+        .bar-progress {
+            flex: 1;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 10px;
+            transition: width 0.3s;
+        }
+        .bar-value {
+            width: 50px;
+            text-align: right;
+            font-weight: 600;
+            color: #667eea;
+        }
+        .activity-feed {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+        }
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+        .activity-item:hover {
+            background: white;
+            border-radius: 10px;
+        }
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+        }
+        .activity-content {
+            flex: 1;
+        }
+        .activity-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 3px;
+        }
+        .activity-time {
+            font-size: 0.85em;
+            color: #999;
+        }
+        .activity-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        .status-pill {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        .status-pill.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status-pill.progress {
+            background: #cce5ff;
+            color: #004085;
+        }
+        .status-pill.resolved {
+            background: #d4edda;
+            color: #155724;
+        }
+        /* Feedback Module Styles */
+        .feedback-module {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .feedback-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .feedback-filters {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .feedback-filter-btn {
+            padding: 8px 20px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .feedback-filter-btn:hover,
+        .feedback-filter-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        .feedback-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .feedback-stat-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            border: 2px solid #e0e0e0;
+        }
+        .feedback-stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        .feedback-stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .feedback-grid {
+            display: grid;
+            gap: 20px;
+        }
+        .feedback-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            border-left: 5px solid #667eea;
+            transition: all 0.3s;
+            position: relative;
+        }
+        .feedback-card.reviewed {
+            opacity: 0.8;
+            border-left-color: #28a745;
+        }
+        .feedback-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .feedback-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .feedback-complaint-id {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 1.1em;
+        }
+        .feedback-rating {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+        .feedback-star {
+            color: #ffc107;
+            font-size: 1.2em;
+        }
+        .feedback-star.empty {
+            color: #ddd;
+        }
+        .feedback-user-info {
+            display: flex;
+            gap: 15px;
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+        .feedback-text {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #e0e0e0;
+            color: #333;
+            line-height: 1.6;
+        }
+        .feedback-meta {
+            display: flex;
+            gap: 20px;
+            color: #999;
+            font-size: 0.85em;
+            margin-bottom: 15px;
+        }
+        .feedback-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        .mark-reviewed-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .mark-reviewed-btn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        .mark-reviewed-btn.reviewed {
+            background: #6c757d;
+            cursor: default;
+        }
+        .mark-reviewed-btn.reviewed:hover {
+            transform: none;
+        }
+        .view-complaint-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .view-complaint-btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+        .department-filter {
+            padding: 10px 20px;
+            border: 2px solid #667eea;
+            border-radius: 20px;
+            background: white;
+            color: #667eea;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .department-filter:hover {
+            background: #667eea;
+            color: white;
+        }
+        .rating-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .rating-high {
+            background: #d4edda;
+            color: #155724;
+        }
+        .rating-medium {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .rating-low {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .admin-table { font-size: 0.85em; }
+            .admin-table th, .admin-table td { padding: 10px 8px; }
+            .complaint-description { max-width: 140px; }
+            .update-btn, .delete-btn { padding: 4px 8px; font-size: 0.75em; }
+        }
+        @media (max-width: 992px) {
+            .admin-header { flex-direction: column; align-items: flex-start; }
+            .admin-actions { width: 100%; }
+            .admin-action-btn { flex: 1; text-align: center; }
+            .admin-stats-summary { width: 100%; justify-content: space-between; }
+        }
+        @media (max-width: 768px) {
+            .hero { padding: 30px 20px; }
+            .hero h1 { font-size: 2em; }
+            .nav-links { flex-wrap: wrap; gap: 10px; }
+            .navbar { padding: 15px; }
+            .admin-container { padding: 15px; }
+            .admin-table { min-width: 850px; }
+            .view-details-btn { padding: 3px 8px; font-size: 0.7em; }
+            .stat-item { flex-direction: column; align-items: flex-start; gap: 3px; }
+            .complaint-details-container { padding: 20px; }
+            .complaint-details-grid { grid-template-columns: 1fr; }
+            .notification-panel { width: 300px; left: 10px; right: 10px; }
+            .file-modal-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- All your HTML content goes here - exactly as in your original file -->
+    <!-- Image View Modal -->
+    <div id="imageViewModel" class="image-view-modal">
+        <div class="image-view-content">
+            <button class="close-image-btn" onclick="closeImageView()">Close</button>
+            <img id="fullSizeImage" src="" alt="Full size image">
+            <div class="image-info" id="imageInfo"></div>
+            <div class="image-controls">
+                <button onclick="downloadCurrentImage()">📥 Download</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Bell -->
+    <div class="notification-bell" id="notificationBell" onclick="toggleNotificationPanel()">
+        🔔
+    </div>
+
+    <!-- Notification Panel -->
+    <div class="notification-panel" id="notificationPanel">
+        <div class="notification-header">
+            <h3>Notifications</h3>
+            <button class="clear-notifications" onclick="clearAllNotifications()">Clear All</button>
+        </div>
+        <div class="notification-list" id="notificationList">
+            <!-- Notifications will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Admin Login Button -->
+    <button class="admin-login-btn" id="adminLoginBtn" style="display: none;" onclick="showAdminLogin()">👑 Admin Login</button>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="login-modal">
+        <div class="login-container">
+            <div class="login-tabs">
+                <button class="login-tab active" onclick="switchLoginTab('user')">User Login</button>
+                <button class="login-tab" onclick="switchLoginTab('register')">Register</button>
+                <button class="login-tab" onclick="switchLoginTab('admin')">Admin Login</button>
+            </div>
+
+            <!-- User Login Form -->
+            <div id="userLoginForm" class="login-form active">
+                <h2 style="text-align: center; color: #667eea; margin-bottom: 30px;">👤 User Login</h2>
+                <div class="input-group">
+                    <label for="userEmail">Email</label>
+                    <input type="email" id="userEmail" placeholder="Enter your email">
+                </div>
+                <div class="input-group">
+                    <label for="userPassword">Password</label>
+                    <input type="password" id="userPassword" placeholder="Enter your password">
+                </div>
+                <button class="login-btn" onclick="loginUser()">Login</button>
+                <div class="switch-form">
+                    Don't have an account? <a onclick="switchLoginTab('register')">Register here</a>
+                </div>
+            </div>
+
+            <!-- User Registration Form -->
+            <div id="registerForm" class="register-form">
+                <h2 style="text-align: center; color: #667eea; margin-bottom: 30px;">📝 Register</h2>
+                <div class="input-group">
+                    <label for="regName">Full Name</label>
+                    <input type="text" id="regName" placeholder="Enter your full name">
+                </div>
+                <div class="input-group">
+                    <label for="regEmail">Email</label>
+                    <input type="email" id="regEmail" placeholder="Enter your email">
+                </div>
+                <div class="input-group">
+                    <label for="regPassword">Password</label>
+                    <input type="password" id="regPassword" placeholder="Create a password">
+                </div>
+                <div class="input-group">
+                    <label for="regConfirmPassword">Confirm Password</label>
+                    <input type="password" id="regConfirmPassword" placeholder="Confirm password">
+                </div>
+                <button class="register-btn" onclick="registerUser()">Register</button>
+                <div class="switch-form">
+                    Already have an account? <a onclick="switchLoginTab('user')">Login here</a>
+                </div>
+            </div>
+
+            <!-- Admin Login Form -->
+            <div id="adminLoginForm" class="login-form">
+                <h2 style="text-align: center; color: #667eea; margin-bottom: 30px;">👑 Admin Login</h2>
+                <div class="input-group">
+                    <label for="adminUsername">Username</label>
+                    <input type="text" id="adminUsername" placeholder="Enter admin username">
+                </div>
+                <div class="input-group">
+                    <label for="adminPassword">Password</label>
+                    <input type="password" id="adminPassword" placeholder="Enter admin password">
+                </div>
+                <button class="login-btn" onclick="loginAdmin()">Login as Admin</button>
+                <div class="switch-form">
+                    User login? <a onclick="switchLoginTab('user')">Click here</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Modal for Viewing Attachments -->
+    <div id="fileModal" class="file-modal">
+        <div class="file-modal-content">
+            <div class="file-modal-header">
+                <h3 id="fileModalTitle">Attached Files</h3>
+                <button class="file-modal-close" onclick="closeFileModal()">Close</button>
+            </div>
+            <div id="fileModalBody" class="file-modal-body">
+                <!-- Files will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div id="feedbackModal" class="complaint-details-modal">
+        <div class="complaint-details-container">
+            <div class="complaint-details-header">
+                <h2>Rate Your Experience</h2>
+                <button class="close-modal-btn" onclick="closeFeedbackModal()">Close</button>
+            </div>
+            <div class="feedback-section">
+                <h3 style="color: #667eea; margin-bottom: 15px;">How satisfied are you with the resolution?</h3>
+                <div class="rating-container" id="ratingStars">
+                    <span class="star" onclick="setRating(1)">★</span>
+                    <span class="star" onclick="setRating(2)">★</span>
+                    <span class="star" onclick="setRating(3)">★</span>
+                    <span class="star" onclick="setRating(4)">★</span>
+                    <span class="star" onclick="setRating(5)">★</span>
+                </div>
+                <textarea id="feedbackText" class="feedback-input" placeholder="Please share your feedback (optional)" rows="4"></textarea>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button class="submit-feedback-btn" onclick="submitFeedback()">Submit Feedback</button>
+                    <button class="reopen-btn" onclick="showReopenForm()">Not Satisfied? Reopen</button>
+                </div>
+                <div id="reopenForm" style="display: none; margin-top: 20px;">
+                    <h4 style="color: #dc3545; margin-bottom: 10px;">Reopen Complaint</h4>
+                    <textarea id="reopenReason" class="feedback-input" placeholder="Please explain why you want to reopen this complaint" rows="3"></textarea>
+                    <button class="reopen-btn" onclick="reopenComplaint()">Confirm Reopen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Complaint Details Modal -->
+    <div id="complaintDetailsModal" class="complaint-details-modal">
+        <div class="complaint-details-container">
+            <div class="complaint-details-header">
+                <h2>Complaint Details</h2>
+                <button class="close-modal-btn" onclick="closeComplaintDetails()">Close</button>
+            </div>
+            <div class="complaint-details-grid" id="complaintDetailsContent">
+                <!-- Complaint details will be loaded here -->
+            </div>
+            <div id="complaintFilesSection" class="email-draft-section" style="display: none;">
+                <h3>Attached Files</h3>
+                <div id="complaintFilesList" class="file-modal-grid">
+                    <!-- Files will be loaded here -->
+                </div>
+            </div>
+            <div id="complaintFeedbackSection" class="email-draft-section" style="display: none;">
+                <h3>Feedback & Rating</h3>
+                <div id="feedbackDisplay">
+                    <!-- Feedback will be displayed here -->
+                </div>
+            </div>
+            <div id="complaintEmailDraft" class="email-draft-section" style="display: none;">
+                <h3>Complete Email Draft</h3>
+                <div class="email-draft-content" id="fullEmailDraft">
+                    <!-- Full email draft will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Navigation -->
+    <div class="navbar" style="display: none;" id="mainNavbar">
+        <div class="logo">
+            <span>🎤</span> Smart Complaint System
+        </div>
+        <div class="nav-links" id="userNav" style="display: none;">
+            <button class="nav-btn active" onclick="showPage('home')">Home</button>
+            <button class="nav-btn" onclick="showPage('complaint')">File Complaint</button>
+            <button class="nav-btn" onclick="showPage('tracking')">Track Status</button>
+            <button class="nav-btn" onclick="showPage('dashboard')">Dashboard</button>
+        </div>
+        <div class="nav-links" id="adminNav" style="display: none;">
+            <button class="nav-btn" onclick="showPage('adminPanel')">Admin Panel</button>
+            <button class="nav-btn" onclick="showPage('adminDashboard')">Admin Dashboard</button>
+            <button class="nav-btn" onclick="showPage('feedbackModule')">Feedback Module</button>
+        </div>
+        <div class="nav-right">
+            <div class="user-info">
+                <div class="user-icon" id="userIcon">U</div>
+                <span id="userName">User</span>
+            </div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <div class="container" id="mainContainer" style="display: none;">
+        <!-- Home Page -->
+        <div id="home" class="page active">
+            <div class="hero">
+                <h1>🎤 Welcome to Smart Complaint System</h1>
+                <p>File complaints using voice in multiple languages - Hindi, English, and Marathi</p>
+                <button class="cta-btn" onclick="showPage('complaint')">File a Complaint Now</button>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🎙️</div>
+                    <h3>Voice Recognition</h3>
+                    <p>Speak naturally in your preferred language. Our AI understands Hindi, English, and Marathi.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <h3>Smart Detection</h3>
+                    <p>Automatically categorizes your complaint and extracts important details like name and location.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📧</div>
+                    <h3>Auto Email Draft</h3>
+                    <p>Generates professional email drafts instantly that you can send to the concerned department.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔄</div>
+                    <h3>Reopen Option</h3>
+                    <p>Not satisfied with resolution? Reopen your complaint with feedback anytime.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⏰</div>
+                    <h3>Auto-Reminders</h3>
+                    <p>Automatic reminders sent to admin for pending complaints to ensure quick action.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⭐</div>
+                    <h3>Feedback & Rating</h3>
+                    <p>Rate your experience and provide feedback to help us improve our service.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Dashboard Page - WITH REFRESH BUTTON -->
+        <div id="dashboard" class="page">
+            <div class="chart-container">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="color: #667eea;">📊 Complaint Statistics Dashboard</h2>
+                    <button onclick="refreshDashboard()" style="padding: 8px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">
+                        🔄 Refresh Dashboard
+                    </button>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalComplaints">0</div>
+                        <div class="stat-label">Total Complaints</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="pendingComplaints">0</div>
+                        <div class="stat-label">Pending</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="progressComplaints">0</div>
+                        <div class="stat-label">In Progress</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="resolvedComplaints">0</div>
+                        <div class="stat-label">Resolved</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="reopenedComplaints">0</div>
+                        <div class="stat-label">Reopened</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="highUrgency">0</div>
+                        <div class="stat-label">High Urgency</div>
+                    </div>
+                </div>
+                <h3 style="color: #667eea; margin: 30px 0 20px 0;">Category Breakdown</h3>
+                <div class="dashboard-chart">
+                    <div class="chart-placeholder" id="categoryChart">
+                        <div class="icon">📊</div>
+                        <div>Category Distribution Chart</div>
+                    </div>
+                </div>
+                <h3 style="color: #667eea; margin: 30px 0 20px 0;">Average Rating</h3>
+                <div class="dashboard-chart">
+                    <div class="chart-placeholder" id="ratingChart">
+                        <div class="icon">⭐</div>
+                        <div id="averageRating">No ratings yet</div>
+                    </div>
+                </div>
+                <h3 style="color: #667eea; margin: 30px 0 20px 0;">Recent Activity</h3>
+                <div id="recentActivity">
+                    <!-- Recent complaints will be shown here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Complaint Filing Page -->
+        <div id="complaint" class="page">
+            <div class="form-container">
+                <h1 style="text-align: center; color: #667eea; margin-bottom: 30px;">🎤 File New Complaint</h1>
+                <div class="step">
+                    <div class="step-header">
+                        <div class="step-number">1</div>
+                        <div class="step-title">Voice to Text</div>
+                    </div>
+                    <div class="language-selector">
+                        <button class="lang-btn active" data-lang="hi-IN">हिंदी (Hindi)</button>
+                        <button class="lang-btn" data-lang="en-IN">English</button>
+                        <button class="lang-btn" data-lang="mr-IN">मराठी (Marathi)</button>
+                    </div>
+                    <div style="text-align: center;">
+                        <button class="control-btn start-btn" id="startBtn">
+                            <span>🎤</span> Start Recording
+                        </button>
+                        <button class="control-btn stop-btn" id="stopBtn" style="display: none;">
+                            <span>⏹️</span> Stop & Process
+                        </button>
+                        <div id="status" class="status-indicator status-idle">⭕ Ready</div>
+                    </div>
+                    <div class="transcript-box empty" id="transcript">Speak now... Your voice will appear here</div>
+                </div>
+                <div class="step">
+                    <div class="step-header">
+                        <div class="step-number">2</div>
+                        <div class="step-title">Complaint Detection</div>
+                    </div>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Category</div>
+                            <div class="info-value" id="category">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Urgency</div>
+                            <div class="info-value" id="urgency">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Location</div>
+                            <div class="info-value" id="location">-</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-header">
+                        <div class="step-number">3</div>
+                        <div class="step-title">Personal Information</div>
+                    </div>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Name</div>
+                            <div class="info-value" id="name">-</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Roll Number</div>
+                            <div class="info-value" id="roll">-</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- File Upload Step -->
+                <div class="step">
+                    <div class="step-header">
+                        <div class="step-number">4</div>
+                        <div class="step-title">Attach Evidence (Optional)</div>
+                    </div>
+                    <div class="file-upload-container">
+                        <input type="file"
+                            id="fileUpload"
+                            accept="image/*,.pdf,.doc,.docx,.txt"
+                            multiple
+                            style="display: none;"
+                            onchange="handleFileUpload(event)">
+                        <button class="file-upload-btn" onclick="document.getElementById('fileUpload').click()">
+                            <span>📎</span> Choose Files
+                        </button>
+                        <div class="file-preview-container" id="filePreviewContainer">
+                            <!-- File previews will appear here -->
+                        </div>
+                    </div>
+                </div>
+                <!-- Location Detection Step -->
+                <div class="step">
+                    <div class="step-header">
+                        <div class="step-number">5</div>
+                        <div class="step-title">Location Detection</div>
+                    </div>
+                    <div class="location-container">
+                        <button class="location-btn" id="locationBtn" onclick="getCurrentLocation()">
+                            <span>📍</span> Detect My Location
+                        </button>
+                        <div class="location-info" id="locationInfo" style="display: none;">
+                            <div class="info-label">Detected Location</div>
+                            <div class="info-value" id="detectedLocation">-</div>
+                            <div class="location-coordinates" id="locationCoordinates"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-header">
+                        <div class="step-number">6</div>
+                        <div class="step-title">Email Draft & Submission</div>
+                    </div>
+                    <div class="email-draft" id="emailDraft">Email draft will appear here after processing...</div>
+                    <div class="action-buttons">
+                        <button class="copy-btn" id="copyBtn" style="display: none;">📋 Copy Email</button>
+                        <button class="submit-btn" id="submitBtn" style="display: none;">✅ Submit Complaint</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tracking Page -->
+        <div id="tracking" class="page">
+            <div class="complaint-list">
+                <h2 style="color: #667eea; margin-bottom: 20px;">📋 Track Your Complaints</h2>
+                <div class="search-bar">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Search by ID, category, or location...">
+                    <button class="filter-btn active" onclick="filterComplaints('all', this)">All</button>
+                    <button class="filter-btn" onclick="filterComplaints('pending', this)">Pending</button>
+                    <button class="filter-btn" onclick="filterComplaints('progress', this)">In Progress</button>
+                    <button class="filter-btn" onclick="filterComplaints('resolved', this)">Resolved</button>
+                    <button class="filter-btn" onclick="filterComplaints('reopened', this)">Reopened</button>
+                </div>
+                <div id="complaintsList">
+                    <!-- Complaints will be dynamically loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Panel Page - Complaint Management -->
+        <div id="adminPanel" class="page">
+            <div class="admin-container">
+                <div class="admin-header">
+                    <h2 style="color: #667eea; margin: 0;">👑 Admin Panel - Complaint Management</h2>
+                    <div class="admin-stats-summary">
+                        <div class="stat-item">
+                            <span class="stat-label">Total Complaints:</span>
+                            <span class="stat-value" id="adminTotalComplaints">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Total Users:</span>
+                            <span class="stat-value" id="adminTotalUsers">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">With Files:</span>
+                            <span class="stat-value" id="adminWithFiles">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Pending >3 days:</span>
+                            <span class="stat-value" id="pendingOverdue">0</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="admin-actions">
+                    <button class="admin-action-btn" onclick="refreshAdminPanel()">🔄 Refresh</button>
+                    <button class="admin-action-btn export-btn" onclick="exportToPDF()">📥 Export PDF</button>
+                    <button class="admin-action-btn export-btn" onclick="exportToExcel()">📊 Export Excel</button>
+                    <button class="admin-action-btn" onclick="clearAllComplaints()">🗑️ Clear All</button>
+                    <button class="admin-action-btn" onclick="viewUsers()">👥 Users</button>
+                    <button class="admin-action-btn" onclick="checkReminders()">⏰ Check Reminders</button>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <input type="text" class="search-input" id="adminSearch"
+                        placeholder="Search by ID, user, category, location..."
+                        oninput="filterAdminComplaints()">
+                </div>
+                <div class="table-responsive">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>User</th>
+                                <th>Category</th>
+                                <th>Location</th>
+                                <th>Description</th>
+                                <th>Urgency</th>
+                                <th>Submitted (Date & Time)</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminComplaintsTable">
+                            <!-- Admin complaints will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="adminEmptyState" class="empty-state" style="display: none;">
+                    <div class="empty-state-icon">📭</div>
+                    <p>No complaints found</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Dashboard Page - WITH REFRESH BUTTON -->
+        <div id="adminDashboard" class="page">
+            <div class="admin-dashboard">
+                <div class="dashboard-header">
+                    <h2>📊 Admin Dashboard</h2>
+                    <div class="date-range">
+                        <input type="date" class="date-input" id="startDate" onchange="filterDashboardByDate()">
+                        <input type="date" class="date-input" id="endDate" onchange="filterDashboardByDate()">
+                        <button class="refresh-btn" onclick="refreshAdminDashboard()">⟳ Refresh</button>
+                        <button class="refresh-btn" onclick="refreshAdminDashboard()" style="margin-left: 10px;">🔄 Refresh All</button>
+                    </div>
+                </div>
+                <div class="stats-overview">
+                    <div class="stat-card-large">
+                        <div class="number" id="totalComplaintsAdmin">0</div>
+                        <div class="label">Total Complaints</div>
+                    </div>
+                    <div class="stat-card-large">
+                        <div class="number" id="pendingComplaintsAdmin">0</div>
+                        <div class="label">Pending</div>
+                    </div>
+                    <div class="stat-card-large">
+                        <div class="number" id="resolvedComplaintsAdmin">0</div>
+                        <div class="label">Resolved</div>
+                    </div>
+                    <div class="stat-card-large">
+                        <div class="number" id="avgResponseTime">0</div>
+                        <div class="label">Avg Response (days)</div>
+                    </div>
+                </div>
+                <div class="chart-row">
+                    <div class="chart-card">
+                        <h3><span>📈</span> Department-wise Distribution</h3>
+                        <div class="pie-chart-container">
+                            <div class="pie-chart" id="departmentPieChart"></div>
+                            <div class="chart-legend" id="departmentLegend">
+                                <!-- Legend will be populated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h3><span>📊</span> Status Breakdown</h3>
+                        <div class="bar-chart" id="statusBarChart">
+                            <!-- Bar chart will be populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-row">
+                    <div class="chart-card">
+                        <h3><span>⚡</span> Urgency Levels</h3>
+                        <div class="bar-chart" id="urgencyBarChart">
+                            <!-- Bar chart will be populated dynamically -->
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h3><span>⭐</span> Average Ratings by Department</h3>
+                        <div class="bar-chart" id="ratingBarChart">
+                            <!-- Bar chart will be populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+                <div class="activity-feed">
+                    <h3 style="color: #667eea; margin-bottom: 20px;">📋 Recent Activity</h3>
+                    <div id="adminRecentActivity">
+                        <!-- Recent activity items will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feedback Module Page -->
+        <div id="feedbackModule" class="page">
+            <div class="feedback-module">
+                <div class="feedback-header">
+                    <h2 style="color: #667eea; margin: 0;">⭐ Feedback Module</h2>
+                    <div class="feedback-filters">
+                        <select class="department-filter" id="feedbackDepartmentFilter" onchange="filterFeedback()">
+                            <option value="all">All Departments</option>
+                            <option value="सफाई/Cleaning/स्वच्छता">Cleaning</option>
+                            <option value="बिजली/Electricity/वीज">Electricity</option>
+                            <option value="पानी/Water/पाणी">Water</option>
+                            <option value="सड़क/Road/रस्ता">Road</option>
+                            <option value="इंटरनेट/Internet">Internet</option>
+                            <option value="आग/Fire/अग्नी">Fire</option>
+                            <option value="General">General</option>
+                        </select>
+                        <button class="feedback-filter-btn active" onclick="filterFeedbackByRating('all', this)">All</button>
+                        <button class="feedback-filter-btn" onclick="filterFeedbackByRating('5', this)">5 ★</button>
+                        <button class="feedback-filter-btn" onclick="filterFeedbackByRating('4', this)">4 ★</button>
+                        <button class="feedback-filter-btn" onclick="filterFeedbackByRating('3', this)">3 ★</button>
+                        <button class="feedback-filter-btn" onclick="filterFeedbackByRating('2', this)">2 ★</button>
+                        <button class="feedback-filter-btn" onclick="filterFeedbackByRating('1', this)">1 ★</button>
+                    </div>
+                </div>
+                <div class="feedback-summary">
+                    <div class="feedback-stat-card">
+                        <div class="feedback-stat-number" id="totalFeedback">0</div>
+                        <div class="feedback-stat-label">Total Feedback</div>
+                    </div>
+                    <div class="feedback-stat-card">
+                        <div class="feedback-stat-number" id="avgRatingOverall">0.0</div>
+                        <div class="feedback-stat-label">Average Rating</div>
+                    </div>
+                    <div class="feedback-stat-card">
+                        <div class="feedback-stat-number" id="pendingReview">0</div>
+                        <div class="feedback-stat-label">Pending Review</div>
+                    </div>
+                    <div class="feedback-stat-card">
+                        <div class="feedback-stat-number" id="reviewedCount">0</div>
+                        <div class="feedback-stat-label">Reviewed</div>
+                    </div>
+                </div>
+                <div class="feedback-grid" id="feedbackList">
+                    <!-- Feedback items will be populated here -->
+                </div>
+                <div id="feedbackEmptyState" class="empty-state" style="display: none;">
+                    <div class="empty-state-icon">📭</div>
+                    <p>No feedback found</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CSRF Token for Django
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        const csrftoken = getCookie('csrftoken');
+
+        // ==================== VARIABLES ====================
+        let isLoggedIn = false;
+        let currentUser = null;
+        let isAdmin = false;
+        let recognition;
+        let currentLang = 'hi-IN';
+        let fullTranscript = '';
+        let complaints = [];
+        let currentFilter = 'all';
+        let currentComplaint = null;
+        let uploadedFiles = [];
+        let currentLocation = null;
+        let notifications = [];
+        let currentFeedbackComplaint = null;
+        let currentRating = 0;
+        let feedbackReviewed = {};
+
+        // ==================== INITIALIZATION ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            checkLoginStatus();
+            initEventListeners();
+            requestNotificationPermission();
+            startReminderChecker();
+            initSpeechRecognition();
+        });
+
+        // ==================== API HELPER ====================
+        async function apiCall(url, method, data) {
+            const options = {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                credentials: 'same-origin'
+            };
+
+            if (data) {
+                options.body = JSON.stringify(data);
+            }
+
+            try {
+                const response = await fetch(url, options);
+                return await response.json();
+            } catch (error) {
+                console.error('API Error:', error);
+                return { success: false, message: 'Network error' };
+            }
+        }
+
+        // ==================== LOGIN FUNCTIONS ====================
+        
+        // Check login status - FIXED
+        async function checkLoginStatus() {
+            try {
+                const savedUser = sessionStorage.getItem('currentUser');
+                if (savedUser) {
+                    currentUser = JSON.parse(savedUser);
+                    // Check both possible field names
+                    isAdmin = currentUser.is_superuser || currentUser.is_admin || false;
+                    console.log("🔵 checkLoginStatus - isAdmin:", isAdmin);
+                    console.log("🔵 checkLoginStatus - currentUser:", currentUser);
+                    isLoggedIn = true;
+                    showMainApp();
+                    await loadComplaints();
+                    await loadNotifications();
+                } else {
+                    document.getElementById('loginModal').style.display = 'flex';
+                    document.getElementById('adminLoginBtn').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error checking login:', error);
+                document.getElementById('loginModal').style.display = 'flex';
+                document.getElementById('adminLoginBtn').style.display = 'block';
+            }
+        }
+
+        // Switch login tabs
+        function switchLoginTab(tab) {
+            document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.login-form, .register-form').forEach(f => f.classList.remove('active'));
+
+            if (tab === 'user') {
+                document.querySelector('.login-tab:nth-child(1)').classList.add('active');
+                document.getElementById('userLoginForm').classList.add('active');
+            } else if (tab === 'register') {
+                document.querySelector('.login-tab:nth-child(2)').classList.add('active');
+                document.getElementById('registerForm').classList.add('active');
+            } else {
+                document.querySelector('.login-tab:nth-child(3)').classList.add('active');
+                document.getElementById('adminLoginForm').classList.add('active');
+            }
+        }
+
+        // Show admin login
+        function showAdminLogin() {
+            document.getElementById('loginModal').style.display = 'flex';
+            switchLoginTab('admin');
+        }
+
+        // User registration - FIXED
+        async function registerUser() {
+            const name = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            const confirmPassword = document.getElementById('regConfirmPassword').value;
+
+            if (!name || !email || !password || !confirmPassword) {
+                alert('Please fill all fields');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                alert('Passwords do not match');
+                return;
+            }
+
+            const result = await apiCall('/api/register/', 'POST', {
+                username: name,
+                email: email,
+                password: password
+            });
+
+            if (result.success) {
+                currentUser = result.user;
+                // IMPORTANT: Check both possible field names
+                isAdmin = currentUser.is_superuser || currentUser.is_admin || false;
+                console.log("🔵 REGISTER - isAdmin:", isAdmin);
+                
+                isLoggedIn = true;
+                sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+                showMainApp();
+                await loadComplaints();
+                alert('Registration successful!');
+            } else {
+                alert(result.message || 'Registration failed');
+            }
+        }
+
+        // User login - FIXED
+        async function loginUser() {
+            const email = document.getElementById('userEmail').value;
+            const password = document.getElementById('userPassword').value;
+
+            if (!email || !password) {
+                alert('Please enter both email and password');
+                return;
+            }
+
+            const result = await apiCall('/api/login/', 'POST', {
+                username: email,
+                password: password
+            });
+
+            if (result.success) {
+                currentUser = result.user;
+                // IMPORTANT: Check both possible field names
+                isAdmin = currentUser.is_superuser || currentUser.is_admin || false;
+                console.log("🔵 USER LOGIN - isAdmin:", isAdmin);
+                
+                isLoggedIn = true;
+                sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+                showMainApp();
+                await loadComplaints();
+                await loadNotifications();
+            } else {
+                alert(result.message || 'Login failed');
+            }
+        }
+
+        // Admin login - FIXED
+        async function loginAdmin() {
+            const username = document.getElementById('adminUsername').value;
+            const password = document.getElementById('adminPassword').value;
+
+            if (!username || !password) {
+                alert('Please enter both username and password');
+                return;
+            }
+
+            console.log("🔵 ADMIN LOGIN - Username:", username);
+            
+            // Clear any existing session data before admin login
+            sessionStorage.removeItem('currentUser');
+            complaints = [];
+            
+            const result = await apiCall('/api/login/', 'POST', {
+                username: username,
+                password: password
+            });
+
+            console.log("🔵 ADMIN LOGIN RESPONSE:", result);
+
+            if (result.success) {
+                currentUser = result.user;
+                console.log("🔵 USER DATA:", currentUser);
+                
+                // IMPORTANT: Check both possible field names
+                isAdmin = currentUser.is_superuser || currentUser.is_admin || false;
+                console.log("🔵 isAdmin set to:", isAdmin);
+                
+                isLoggedIn = true;
+                sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+                showMainApp();
+                await loadComplaints();
+                await loadNotifications();
+            } else {
+                alert(result.message || 'Login failed');
+            }
+        }
+
+        // Logout
+        async function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                await fetch('/logout/');
+                isLoggedIn = false;
+                currentUser = null;
+                isAdmin = false;
+                sessionStorage.removeItem('currentUser');
+
+                document.getElementById('mainNavbar').style.display = 'none';
+                document.getElementById('mainContainer').style.display = 'none';
+                document.getElementById('loginModal').style.display = 'flex';
+                document.getElementById('adminLoginBtn').style.display = 'block';
+
+                // Reset forms
+                document.getElementById('userEmail').value = '';
+                document.getElementById('userPassword').value = '';
+                document.getElementById('adminUsername').value = '';
+                document.getElementById('adminPassword').value = '';
+                document.getElementById('regName').value = '';
+                document.getElementById('regEmail').value = '';
+                document.getElementById('regPassword').value = '';
+                document.getElementById('regConfirmPassword').value = '';
+
+                switchLoginTab('user');
+            }
+        }
+
+        // Show main application - FIXED
+        function showMainApp() {
+            console.log("🔵 showMainApp - isAdmin:", isAdmin);
+            console.log("🔵 showMainApp - currentUser:", currentUser);
+            
+            document.getElementById('loginModal').style.display = 'none';
+            document.getElementById('adminLoginBtn').style.display = 'none';
+            document.getElementById('mainNavbar').style.display = 'flex';
+            document.getElementById('mainContainer').style.display = 'block';
+            document.getElementById('userName').textContent = currentUser.username;
+            document.getElementById('userIcon').textContent = currentUser.username.charAt(0).toUpperCase();
+
+            if (isAdmin) {
+                console.log("🔵 Showing ADMIN interface");
+                document.getElementById('userNav').style.display = 'none';
+                document.getElementById('adminNav').style.display = 'flex';
+                showPage('adminPanel');
+            } else {
+                console.log("🔵 Showing USER interface");
+                document.getElementById('userNav').style.display = 'flex';
+                document.getElementById('adminNav').style.display = 'none';
+                showPage('home');
+            }
+        }
+
+        // Page Navigation
+        async function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+
+            const navButtons = document.querySelectorAll('.nav-btn');
+            navButtons.forEach(btn => {
+                if (btn.textContent.toLowerCase().includes(pageId.toLowerCase()) ||
+                    (pageId === 'home' && btn.textContent === 'Home') ||
+                    (pageId === 'complaint' && btn.textContent.includes('File')) ||
+                    (pageId === 'tracking' && btn.textContent.includes('Track')) ||
+                    (pageId === 'dashboard' && btn.textContent === 'Dashboard') ||
+                    (pageId === 'adminPanel' && btn.textContent.includes('Admin Panel')) ||
+                    (pageId === 'adminDashboard' && btn.textContent.includes('Admin Dashboard')) ||
+                    (pageId === 'feedbackModule' && btn.textContent.includes('Feedback'))) {
+                    btn.classList.add('active');
+                }
+            });
+
+            if (pageId === 'dashboard') {
+                await updateDashboard();
+            } else if (pageId === 'tracking') {
+                await renderComplaints();
+            } else if (pageId === 'adminPanel') {
+                await renderAdminPanel();
+            } else if (pageId === 'adminDashboard') {
+                await updateAdminDashboard();
+            } else if (pageId === 'feedbackModule') {
+                await updateFeedbackModule();
+            } else if (pageId === 'complaint') {
+                uploadedFiles = [];
+                currentLocation = null;
+                updateFilePreview();
+                document.getElementById('locationInfo').style.display = 'none';
+            }
+        }
+
+        // ==================== DASHBOARD REFRESH FUNCTIONS ====================
+        
+        // Manual refresh for user dashboard
+        async function refreshDashboard() {
+            console.log("🔄 Manual refresh triggered");
+            await loadComplaints();
+            await updateDashboard();
+            alert('Dashboard refreshed!');
+        }
+
+        // Manual refresh for admin dashboard
+        async function refreshAdminDashboard() {
+            console.log("🔄 Manual admin refresh triggered");
+            await loadComplaints();
+            await updateAdminDashboard();
+            await renderAdminPanel();
+            alert('Admin Dashboard refreshed!');
+        }
+
+        // ==================== COMPLAINT FUNCTIONS ====================
+
+        // Load complaints from server - WITH DEBUG LOGS
+        async function loadComplaints() {
+            console.log("🔵 loadComplaints CALLED at:", new Date().toLocaleTimeString());
+            console.log("🔵 Current user:", currentUser?.username, "isAdmin:", isAdmin);
+            
+            const result = await apiCall('/api/get-complaints/', 'GET');
+            console.log("🔵 Complaints API Response:", result);
+            
+            if (result.success) {
+                complaints = result.complaints;
+                console.log(`🔵 Loaded ${complaints.length} complaints`);
+                
+                if (complaints.length > 0) {
+                    console.log("🔵 First complaint:", complaints[0]);
+                } else {
+                    console.log("🔵 No complaints found in database");
+                }
+                
+                // Update all views
+                await renderComplaints();
+                await updateDashboard();
+                
+                if (isAdmin) {
+                    await renderAdminPanel();
+                    await updateAdminDashboard();
+                    await updateFeedbackModule();
+                }
+                
+                return true;
+            } else {
+                console.error("🔴 Failed to load complaints:", result.message);
+                return false;
+            }
+        }
+
+        // Submit complaint - FIXED with dashboard refresh
+        async function submitComplaint() {
+            if (!currentComplaint) {
+                alert('Please record a complaint first!');
+                return;
+            }
+
+            const filesToSave = uploadedFiles.map(file => ({
+                name: file.name,
+                type: file.type,
+                size: file.size,
+                data: file.data,
+                preview: file.preview
+            }));
+
+            const complaintData = {
+                ...currentComplaint,
+                files: filesToSave,
+                gpsLocation: currentLocation
+            };
+
+            const result = await apiCall('/api/submit-complaint/', 'POST', complaintData);
+
+            if (result.success) {
+                alert(`✅ Complaint submitted successfully!\n\nComplaint ID: ${result.complaint_id}`);
+
+                // Reset form
+                document.getElementById('transcript').textContent = 'Speak now... Your voice will appear here';
+                document.getElementById('transcript').classList.add('empty');
+                document.getElementById('category').textContent = '-';
+                document.getElementById('urgency').textContent = '-';
+                document.getElementById('location').textContent = '-';
+                document.getElementById('name').textContent = '-';
+                document.getElementById('roll').textContent = '-';
+                document.getElementById('emailDraft').textContent = 'Email draft will appear here after processing...';
+                document.getElementById('copyBtn').style.display = 'none';
+                document.getElementById('submitBtn').style.display = 'none';
+                document.getElementById('status').innerHTML = '⭕ Ready';
+                document.getElementById('locationInfo').style.display = 'none';
+                document.getElementById('locationBtn').innerHTML = '<span>📍</span> Detect My Location';
+                document.getElementById('locationBtn').classList.remove('loading');
+
+                uploadedFiles = [];
+                updateFilePreview();
+                currentLocation = null;
+                currentComplaint = null;
+                fullTranscript = '';
+
+                // Refresh ALL data
+                await loadComplaints();
+                await updateDashboard();
+                if (isAdmin) {
+                    await updateAdminDashboard();
+                    await renderAdminPanel();
+                }
+                
+                await showPage('tracking');
+            } else {
+                alert('Error: ' + result.message);
+            }
+        }
+
+        // Update complaint status - FIXED with dashboard refresh
+        async function updateStatus(id, newStatus) {
+            const result = await apiCall('/api/update-status/', 'POST', {
+                complaint_id: id,
+                status: newStatus
+            });
+
+            if (result.success) {
+                await loadComplaints();
+                await updateDashboard();
+                if (isAdmin) {
+                    await updateAdminDashboard();
+                    await renderAdminPanel();
+                }
+                await renderComplaints();
+                
+                if (newStatus === 'resolved' && !isAdmin) {
+                    setTimeout(() => {
+                        if (confirm('Your complaint has been resolved. Would you like to rate your experience?')) {
+                            showFeedbackModal(id);
+                        }
+                    }, 500);
+                }
+            } else {
+                alert('Error: ' + result.message);
+            }
+        }
+
+        // Delete complaint - FIXED with dashboard refresh
+        async function deleteComplaint(id) {
+            if (confirm('Are you sure you want to delete this complaint?')) {
+                const result = await apiCall('/api/delete-complaint/', 'POST', {
+                    complaint_id: id
+                });
+
+                if (result.success) {
+                    await loadComplaints();
+                    await updateDashboard();
+                    if (isAdmin) {
+                        await updateAdminDashboard();
+                        await renderAdminPanel();
+                    }
+                    await renderComplaints();
+                    alert('Complaint deleted successfully!');
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            }
+        }
+
+        // Update admin status - FIXED with dashboard refresh
+        async function updateAdminStatus(id) {
+            const select = document.getElementById(`status-${id}`);
+            const newStatus = select.value;
+            
+            const result = await apiCall('/api/update-status/', 'POST', {
+                complaint_id: id,
+                status: newStatus
+            });
+
+            if (result.success) {
+                alert(`Status updated to ${newStatus} for complaint ${id}`);
+                
+                await loadComplaints();
+                await renderAdminPanel();
+                await updateAdminDashboard();
+                await updateDashboard();
+            } else {
+                alert('Error: ' + result.message);
+            }
+        }
+
+        // Admin delete complaint
+        async function adminDeleteComplaint(id) {
+            if (confirm('Are you sure you want to delete this complaint?')) {
+                const result = await apiCall('/api/delete-complaint/', 'POST', {
+                    complaint_id: id
+                });
+
+                if (result.success) {
+                    await loadComplaints();
+                    await renderAdminPanel();
+                    await updateAdminDashboard();
+                    alert('Complaint deleted successfully!');
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            }
+        }
+
+        // Refresh Admin Panel
+        async function refreshAdminPanel() {
+            await renderAdminPanel();
+            await updateAdminDashboard();
+            alert('Admin panel refreshed with latest data!');
+        }
+
+        // ==================== DASHBOARD FUNCTIONS ====================
+
+        // Update user dashboard - WITH DEBUG LOGS
+        async function updateDashboard() {
+            console.log("🔵 updateDashboard CALLED at:", new Date().toLocaleTimeString());
+            console.log("🔵 Current complaints array length:", complaints.length);
+            
+            const result = await apiCall('/api/get-dashboard-stats/', 'GET');
+            console.log("🔵 Dashboard API Response:", result);
+
+            if (result.success) {
+                const stats = result.stats;
+                console.log("🔵 Dashboard Stats Received:", stats);
+
+                // Update stats cards
+                document.getElementById('totalComplaints').textContent = stats.total || 0;
+                document.getElementById('pendingComplaints').textContent = stats.pending || 0;
+                document.getElementById('progressComplaints').textContent = stats.progress || 0;
+                document.getElementById('resolvedComplaints').textContent = stats.resolved || 0;
+                document.getElementById('reopenedComplaints').textContent = stats.reopened || 0;
+                document.getElementById('highUrgency').textContent = stats.high_urgency || 0;
+
+                // Update category chart
+                const categoryChart = document.getElementById('categoryChart');
+                if (!stats.categories || Object.keys(stats.categories).length === 0) {
+                    categoryChart.innerHTML = '<div class="icon">📊</div><div>No complaint data yet</div>';
+                } else {
+                    let chartHTML = '<div style="padding: 20px; color: white;">';
+                    chartHTML += '<h4 style="margin-bottom: 15px; text-align: center;">Complaints by Category</h4>';
+                    
+                    Object.entries(stats.categories).forEach(([cat, count]) => {
+                        const percentage = stats.total > 0 ? ((count / stats.total) * 100).toFixed(1) : 0;
+                        chartHTML += `
+                            <div style="margin-bottom: 10px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                    <span>${cat}</span>
+                                    <span>${count} (${percentage}%)</span>
+                                </div>
+                                <div style="background: rgba(255,255,255,0.3); height: 10px; border-radius: 5px;">
+                                    <div style="background: white; height: 100%; width: ${percentage}%; border-radius: 5px;"></div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    chartHTML += '</div>';
+                    categoryChart.innerHTML = chartHTML;
+                }
+
+                // Update rating chart
+                const ratingChart = document.getElementById('ratingChart');
+                const avgRating = stats.avg_rating || 0;
+                if (avgRating > 0) {
+                    ratingChart.innerHTML = `
+                        <div class="icon">⭐</div>
+                        <div>Average Rating: ${avgRating} / 5</div>
+                        <div style="margin-top: 10px;">
+                            ${Array(5).fill(0).map((_, i) =>
+                                `<span style="color: ${i < Math.round(avgRating) ? '#ffc107' : '#ddd'}; font-size: 2em;">★</span>`
+                            ).join('')}
+                        </div>
+                    `;
+                } else {
+                    ratingChart.innerHTML = '<div class="icon">⭐</div><div>No ratings yet</div>';
+                }
+
+                // Recent activity
+                const recentDiv = document.getElementById('recentActivity');
+                const userComplaints = !isAdmin && currentUser 
+                    ? complaints.filter(c => c.user_email === currentUser.email)
+                    : complaints;
+                const recent = userComplaints.slice(-5).reverse();
+
+                if (recent.length === 0) {
+                    recentDiv.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><p>No complaints yet</p></div>';
+                } else {
+                    recentDiv.innerHTML = recent.map(c => `
+                        <div class="complaint-item">
+                            <div class="complaint-header">
+                                <span class="complaint-id">${c.id}</span>
+                                <span class="status-badge status-${c.status}">${c.status.toUpperCase()}</span>
+                            </div>
+                            <div class="complaint-details">${c.details.substring(0, 100)}...</div>
+                            <div class="complaint-meta">
+                                <span>📁 ${c.complaint_type}</span>
+                                <span>📍 ${c.location}</span>
+                                <span>⚡ ${c.urgency}</span>
+                                <span>📅 ${new Date(c.submitted_at).toLocaleDateString()}</span>
+                                ${c.files && c.files.length > 0 ? '<span>📎 ' + c.files.length + ' file(s)</span>' : ''}
+                                ${c.rating ? '<span>⭐ ' + c.rating + '/5</span>' : ''}
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                
+                console.log("🔵 Dashboard updated successfully");
+            } else {
+                console.error("🔴 Dashboard API failed:", result.message);
+            }
+        }
+
+        // Update admin dashboard - WITH DEBUG LOGS
+        async function updateAdminDashboard() {
+            if (!isAdmin) {
+                console.log("🔵 Not admin, skipping admin dashboard update");
+                return;
+            }
+            
+            console.log("🔵 updateAdminDashboard CALLED at:", new Date().toLocaleTimeString());
+            
+            const result = await apiCall('/api/get-dashboard-stats/', 'GET');
+            console.log("🔵 Admin Dashboard API Response:", result);
+
+            if (result.success) {
+                const stats = result.stats;
+                console.log("🔵 Admin Stats Received:", stats);
+
+                document.getElementById('totalComplaintsAdmin').textContent = stats.total || 0;
+                document.getElementById('pendingComplaintsAdmin').textContent = stats.pending || 0;
+                document.getElementById('resolvedComplaintsAdmin').textContent = stats.resolved || 0;
+                
+                const avgResponse = stats.total > 0 ? "2.5" : "0";
+                document.getElementById('avgResponseTime').textContent = avgResponse;
+
+                // Update status bar chart
+                const statusChart = document.getElementById('statusBarChart');
+                const statusCounts = {
+                    'pending': stats.pending || 0,
+                    'progress': stats.progress || 0,
+                    'resolved': stats.resolved || 0,
+                    'reopened': stats.reopened || 0
+                };
+
+                statusChart.innerHTML = Object.entries(statusCounts).map(([status, count]) => {
+                    const percentage = stats.total > 0 ? ((count / stats.total) * 100).toFixed(1) : 0;
+                    return `
+                        <div class="bar-item">
+                            <span class="bar-label">${status.toUpperCase()}</span>
+                            <div class="bar-progress">
+                                <div class="bar-fill" style="width: ${percentage}%;"></div>
+                            </div>
+                            <span class="bar-value">${count}</span>
+                        </div>
+                    `;
+                }).join('');
+
+                // Update urgency chart
+                const urgencyChart = document.getElementById('urgencyBarChart');
+                const highCount = stats.high_urgency || 0;
+                const normalCount = (stats.total || 0) - highCount;
+                
+                urgencyChart.innerHTML = `
+                    <div class="bar-item">
+                        <span class="bar-label">High</span>
+                        <div class="bar-progress">
+                            <div class="bar-fill" style="width: ${stats.total > 0 ? (highCount/stats.total*100) : 0}%; background: #dc3545;"></div>
+                        </div>
+                        <span class="bar-value">${highCount}</span>
+                    </div>
+                    <div class="bar-item">
+                        <span class="bar-label">Normal</span>
+                        <div class="bar-progress">
+                            <div class="bar-fill" style="width: ${stats.total > 0 ? (normalCount/stats.total*100) : 0}%; background: #28a745;"></div>
+                        </div>
+                        <span class="bar-value">${normalCount}</span>
+                    </div>
+                `;
+
+                // Update department legend
+                const legend = document.getElementById('departmentLegend');
+                if (legend) {
+                    legend.innerHTML = '';
+                    const colors = ['#667eea', '#28a745', '#ffc107', '#dc3545', '#17a2b8', '#6c757d'];
+                    let colorIndex = 0;
+                    
+                    if (stats.categories) {
+                        Object.entries(stats.categories).forEach(([dept, count]) => {
+                            const percentage = stats.total > 0 ? ((count / stats.total) * 100).toFixed(1) : 0;
+                            legend.innerHTML += `
+                                <div class="legend-item">
+                                    <div class="legend-color" style="background: ${colors[colorIndex % colors.length]};"></div>
+                                    <span>${dept}: ${count} (${percentage}%)</span>
+                                </div>
+                            `;
+                            colorIndex++;
+                        });
+                    }
+                }
+
+                // Recent activity
+                const recentActivity = document.getElementById('adminRecentActivity');
+                const recent = complaints.slice(-10).reverse();
+
+                if (recent.length === 0) {
+                    recentActivity.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><p>No recent activity</p></div>';
+                } else {
+                    recentActivity.innerHTML = recent.map(c => {
+                        const timeAgo = getTimeAgo(new Date(c.submitted_at));
+                        return `
+                            <div class="activity-item">
+                                <div class="activity-icon">📝</div>
+                                <div class="activity-content">
+                                    <div class="activity-title">${c.id} - ${c.complaint_type}</div>
+                                    <div class="activity-time">${timeAgo} by ${c.user_name}</div>
+                                </div>
+                                <div class="status-pill ${c.status}">${c.status}</div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+                
+                console.log("🔵 Admin Dashboard updated successfully");
+            } else {
+                console.error("🔴 Admin Dashboard API failed:", result.message);
+            }
+        }
+
+        // ==================== RENDER FUNCTIONS ====================
+
+        // Render complaints for tracking
+        function renderComplaints() {
+            const listDiv = document.getElementById('complaintsList');
+
+            let filtered = complaints;
+            if (!isAdmin && currentUser) {
+                filtered = complaints.filter(c => c.user_email === currentUser.email);
+            }
+
+            if (currentFilter !== 'all') {
+                filtered = filtered.filter(c => c.status === currentFilter);
+            }
+
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            if (searchTerm) {
+                filtered = filtered.filter(c =>
+                    c.id.toLowerCase().includes(searchTerm) ||
+                    c.complaint_type.toLowerCase().includes(searchTerm) ||
+                    c.location.toLowerCase().includes(searchTerm) ||
+                    c.details.toLowerCase().includes(searchTerm) ||
+                    c.user_name.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            if (filtered.length === 0) {
+                listDiv.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔍</div><p>No complaints found</p></div>';
+                return;
+            }
+
+            listDiv.innerHTML = filtered.slice().reverse().map(c => `
+                <div class="complaint-item">
+                    <div class="complaint-header">
+                        <span class="complaint-id">${c.id}</span>
+                        <span class="status-badge status-${c.status}">${c.status.toUpperCase()}</span>
+                    </div>
+                    <div class="complaint-details"><strong>${c.complaint_type}</strong> - ${c.details}</div>
+                    <div class="complaint-meta">
+                        <span>📍 ${c.location}</span>
+                        <span>⚡ ${c.urgency}</span>
+                        <span>👤 ${c.user_name}</span>
+                        <span>📅 ${new Date(c.submitted_at).toLocaleString()}</span>
+                        ${c.files && c.files.length > 0 ? '<span>📎 ' + c.files.length + ' file(s)</span>' : ''}
+                        ${c.has_gps ? '<span>📍 GPS</span>' : ''}
+                        ${c.rating ? '<span>⭐ ' + c.rating + '/5</span>' : ''}
+                    </div>
+                    ${c.status === 'resolved' && !c.rating && !isAdmin ? `
+                        <button class="submit-feedback-btn" onclick="showFeedbackModal('${c.id}')" style="margin-top: 10px;">
+                            Rate Resolution
+                        </button>
+                    ` : ''}
+                    ${c.reopened ? `<div style="color: #dc3545; font-size: 0.85em; margin-top: 5px;">Reopened: ${c.reopen_reason}</div>` : ''}
+                </div>
+            `).join('');
+        }
+
+        // Filter complaints
+        function filterComplaints(status, btnEl) {
+            currentFilter = status;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            if (btnEl) {
+                btnEl.classList.add('active');
+            }
+            renderComplaints();
+        }
+
+        // Admin Panel Functions
+        async function renderAdminPanel() {
+            const result = await apiCall('/api/get-admin-data/', 'GET');
+
+            if (result.success) {
+                document.getElementById('adminTotalComplaints').textContent = result.stats.total_complaints;
+                document.getElementById('adminTotalUsers').textContent = result.stats.total_users;
+                document.getElementById('adminWithFiles').textContent = result.stats.with_files;
+                document.getElementById('pendingOverdue').textContent = result.stats.pending_overdue;
+
+                const tableBody = document.getElementById('adminComplaintsTable');
+
+                if (result.complaints.length === 0) {
+                    document.getElementById('adminEmptyState').style.display = 'block';
+                    tableBody.innerHTML = '';
+                    return;
+                }
+
+                document.getElementById('adminEmptyState').style.display = 'none';
+
+                tableBody.innerHTML = result.complaints.map(c => {
+                    const isOverdue = c.days_pending >= 3;
+                    return `
+                        <tr ${isOverdue ? 'style="background-color: #fff3cd;"' : ''}>
+                            <td><strong>${c.id}</strong></td>
+                            <td>${c.user_name}</td>
+                            <td>${c.complaint_type}</td>
+                            <td>${c.location}</td>
+                            <td>
+                                <div class="complaint-description" title="${c.full_details}" onclick="viewComplaintDetails('${c.id}')">
+                                    ${c.details}
+                                </div>
+                                <button class="view-details-btn" onclick="viewComplaintDetails('${c.id}')">View Details</button>
+                            </td>
+                            <td>
+                                <span class="${c.urgency === 'High' ? 'urgency-high' : 'urgency-normal'}">
+                                    ${c.urgency}
+                                </span>
+                            </td>
+                            <td>
+                                ${c.submitted_date} ${c.submitted_time}
+                                ${isOverdue ? '<br><span style="color: #dc3545; font-size: 0.8em;">⚠️ Overdue</span>' : ''}
+                            </td>
+                            <td>
+                                <select class="status-select" id="status-${c.id}" onchange="updateAdminStatus('${c.id}')">
+                                    <option value="pending" ${c.status === 'pending' ? 'selected' : ''}>Pending</option>
+                                    <option value="progress" ${c.status === 'progress' ? 'selected' : ''}>Progress</option>
+                                    <option value="resolved" ${c.status === 'resolved' ? 'selected' : ''}>Resolved</option>
+                                    <option value="reopened" ${c.status === 'reopened' ? 'selected' : ''}>Reopened</option>
+                                </select>
+                            </td>
+                            <td>
+                                <div class="actions-container">
+                                    <button class="update-btn" onclick="updateAdminStatus('${c.id}')">✓</button>
+                                    <button class="delete-btn" onclick="adminDeleteComplaint('${c.id}')">×</button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        }
+
+        // Filter admin complaints
+        function filterAdminComplaints() {
+            const searchTerm = document.getElementById('adminSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#adminComplaintsTable tr');
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        // ==================== FEEDBACK FUNCTIONS ====================
+
+        // Show feedback modal
+        function showFeedbackModal(complaintId) {
+            currentFeedbackComplaint = complaints.find(c => c.id === complaintId);
+            if (!currentFeedbackComplaint) return;
+
+            currentRating = 0;
+            document.querySelectorAll('#ratingStars .star').forEach(s => s.classList.remove('active'));
+            document.getElementById('feedbackText').value = '';
+            document.getElementById('reopenForm').style.display = 'none';
+            document.getElementById('feedbackModal').style.display = 'flex';
+        }
+
+        // Close feedback modal
+        function closeFeedbackModal() {
+            document.getElementById('feedbackModal').style.display = 'none';
+            currentFeedbackComplaint = null;
+            currentRating = 0;
+        }
+
+        // Set rating
+        function setRating(rating) {
+            currentRating = rating;
+            document.querySelectorAll('#ratingStars .star').forEach((star, index) => {
+                if (index < rating) {
+                    star.classList.add('active');
+                } else {
+                    star.classList.remove('active');
+                }
+            });
+        }
+
+        // Submit feedback
+        async function submitFeedback() {
+            if (!currentFeedbackComplaint) return;
+
+            const feedback = document.getElementById('feedbackText').value;
+
+            if (currentRating === 0) {
+                alert('Please select a rating');
+                return;
+            }
+
+            const result = await apiCall('/api/submit-feedback/', 'POST', {
+                complaint_id: currentFeedbackComplaint.id,
+                rating: currentRating,
+                feedback: feedback
+            });
+
+            if (result.success) {
+                closeFeedbackModal();
+                await loadComplaints();
+                alert('Thank you for your feedback!');
+            } else {
+                alert('Error: ' + result.message);
+            }
+        }
+
+        // Show reopen form
+        function showReopenForm() {
+            document.getElementById('reopenForm').style.display = 'block';
+        }
+
+        // Reopen complaint
+        async function reopenComplaint() {
+            if (!currentFeedbackComplaint) return;
+
+            const reason = document.getElementById('reopenReason').value;
+
+            if (!reason) {
+                alert('Please provide a reason for reopening');
+                return;
+            }
+
+            const result = await apiCall('/api/reopen-complaint/', 'POST', {
+                complaint_id: currentFeedbackComplaint.id,
+                reason: reason
+            });
+
+            if (result.success) {
+                closeFeedbackModal();
+                await loadComplaints();
+                alert('Complaint reopened successfully!');
+            } else {
+                alert('Error: ' + result.message);
+            }
+        }
+
+        // ==================== NOTIFICATION FUNCTIONS ====================
+
+        // Load notifications
+        async function loadNotifications() {
+            const result = await apiCall('/api/get-notifications/', 'GET');
+            if (result.success) {
+                notifications = result.notifications;
+                const notificationList = document.getElementById('notificationList');
+
+                if (notifications.length === 0) {
+                    notificationList.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔔</div><p>No notifications</p></div>';
+                    return;
+                }
+
+                let html = '';
+                notifications.forEach(notification => {
+                    const timeAgo = getTimeAgo(new Date(notification.created_at));
+                    html += `
+                        <div class="notification-item unread" onclick="markNotificationRead(${notification.id})">
+                            <div class="notification-title">${notification.title}</div>
+                            <div class="notification-message">${notification.message}</div>
+                            <div class="notification-time">${timeAgo}</div>
+                        </div>
+                    `;
+                });
+
+                notificationList.innerHTML = html;
+                updateNotificationBell();
+            }
+        }
+
+        // Mark notification as read
+        async function markNotificationRead(id) {
+            await apiCall('/api/mark-notification-read/', 'POST', {
+                notification_id: id
+            });
+            await loadNotifications();
+        }
+
+        // Clear all notifications
+        async function clearAllNotifications() {
+            if (confirm('Clear all notifications?')) {
+                notifications = [];
+                await loadNotifications();
+                updateNotificationBell();
+            }
+        }
+
+        // Toggle notification panel
+        function toggleNotificationPanel() {
+            const panel = document.getElementById('notificationPanel');
+            panel.classList.toggle('active');
+        }
+
+        // Update notification bell
+        function updateNotificationBell() {
+            const bell = document.getElementById('notificationBell');
+            const unreadCount = notifications.length;
+            
+            if (unreadCount > 0) {
+                bell.classList.add('has-notifications');
+            } else {
+                bell.classList.remove('has-notifications');
+            }
+        }
+
+        // Get time ago string
+        function getTimeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            let interval = Math.floor(seconds / 31536000);
+            if (interval >= 1) return interval + " year" + (interval === 1 ? "" : "s") + " ago";
+            interval = Math.floor(seconds / 2592000);
+            if (interval >= 1) return interval + " month" + (interval === 1 ? "" : "s") + " ago";
+            interval = Math.floor(seconds / 86400);
+            if (interval >= 1) return interval + " day" + (interval === 1 ? "" : "s") + " ago";
+            interval = Math.floor(seconds / 3600);
+            if (interval >= 1) return interval + " hour" + (interval === 1 ? "" : "s") + " ago";
+            interval = Math.floor(seconds / 60);
+            if (interval >= 1) return interval + " minute" + (interval === 1 ? "" : "s") + " ago";
+            return "just now";
+        }
+
+        // ==================== SPEECH RECOGNITION FUNCTIONS ====================
+
+        // Initialize Speech Recognition
+        function initSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.continuous = true;
+                recognition.interimResults = true;
+
+                recognition.onresult = (event) => {
+                    let interimTranscript = '';
+                    let finalTranscript = '';
+
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const transcript = event.results[i][0].transcript;
+                        if (event.results[i].isFinal) {
+                            finalTranscript += transcript + ' ';
+                        } else {
+                            interimTranscript += transcript;
+                        }
+                    }
+
+                    if (finalTranscript) {
+                        fullTranscript += finalTranscript;
+                    }
+
+                    const transcriptBox = document.getElementById('transcript');
+                    transcriptBox.classList.remove('empty');
+                    transcriptBox.textContent = fullTranscript + interimTranscript;
+                };
+
+                recognition.onerror = (event) => {
+                    console.error('Speech recognition error:', event.error);
+                };
+            } else {
+                console.warn('Speech recognition not supported');
+            }
+        }
+
+        // Initialize event listeners
+        function initEventListeners() {
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentLang = this.dataset.lang;
+                });
+            });
+
+            const startBtn = document.getElementById('startBtn');
+            if (startBtn) startBtn.addEventListener('click', startRecording);
+            
+            const stopBtn = document.getElementById('stopBtn');
+            if (stopBtn) stopBtn.addEventListener('click', stopRecording);
+            
+            const copyBtn = document.getElementById('copyBtn');
+            if (copyBtn) copyBtn.addEventListener('click', copyEmail);
+            
+            const submitBtn = document.getElementById('submitBtn');
+            if (submitBtn) submitBtn.addEventListener('click', submitComplaint);
+            
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) searchInput.addEventListener('input', renderComplaints);
+
+            const adminSearch = document.getElementById('adminSearch');
+            if (adminSearch) {
+                adminSearch.addEventListener('input', filterAdminComplaints);
+            }
+        }
+
+        // Start recording
+        function startRecording() {
+            if (!recognition) {
+                alert('Speech recognition is not supported in this browser. Please use Chrome or Edge.');
+                return;
+            }
+
+            fullTranscript = '';
+            document.getElementById('transcript').textContent = '';
+            document.getElementById('transcript').classList.add('empty');
+            recognition.lang = currentLang;
+            recognition.start();
+
+            document.getElementById('startBtn').style.display = 'none';
+            document.getElementById('stopBtn').style.display = 'flex';
+            document.getElementById('stopBtn').style.margin = '0 auto';
+
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = 'status-indicator status-listening';
+            statusDiv.innerHTML = '<div class="pulse"></div> Listening...';
+        }
+
+        // Stop recording
+        function stopRecording() {
+            if (recognition) {
+                recognition.stop();
+            }
+
+            document.getElementById('startBtn').style.display = 'flex';
+            document.getElementById('startBtn').style.margin = '0 auto';
+            document.getElementById('stopBtn').style.display = 'none';
+
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = 'status-indicator status-idle';
+            statusDiv.innerHTML = '⭕ Processing...';
+
+            const transcriptText = document.getElementById('transcript').textContent.trim();
+            if (transcriptText && transcriptText !== 'Speak now... Your voice will appear here') {
+                processComplaint(transcriptText);
+                setTimeout(() => {
+                    statusDiv.innerHTML = '<span class="checkmark">✓</span> Complete';
+                }, 500);
+            } else {
+                statusDiv.innerHTML = '⚠️ No speech detected';
+                alert('No speech detected. Please try again.');
+            }
+        }
+
+        // Process complaint text
+        function processComplaint(text) {
+            if (!text.trim()) {
+                alert('No speech detected. Please try again.');
+                return;
+            }
+
+            const complaint = detectComplaint(text);
+            currentComplaint = complaint;
+
+            document.getElementById('category').textContent = complaint.complaint_type;
+            document.getElementById('urgency').innerHTML = complaint.urgency === 'High' ?
+                '<span class="urgency-high">⚠️ High</span>' :
+                '<span class="urgency-normal">✓ Normal</span>';
+            document.getElementById('location').textContent = complaint.location;
+            document.getElementById('name').textContent = complaint.name || 'Anonymous';
+            document.getElementById('roll').textContent = complaint.roll || 'Not provided';
+
+            const email = generateEmail(complaint, currentLang);
+            document.getElementById('emailDraft').textContent =
+                `To: ${email.to}\n\nSubject: ${email.subject}\n\n${email.body}`;
+
+            document.getElementById('copyBtn').style.display = 'inline-block';
+            document.getElementById('submitBtn').style.display = 'inline-block';
+        }
+
+        // Extract name from text
+        function extractName(text) {
+            const matchHi = text.match(/मेरा नाम\s+([^\s,।]+)/i);
+            if (matchHi) return matchHi[1].trim();
+
+            const matchEn = text.match(/(?:my name is|name is|this is)\s+([a-zA-Z]+(?:\s+[a-zA-Z]+)?)/i);
+            if (matchEn) return matchEn[1].trim();
+
+            const matchMr = text.match(/माझ[ें]\s*नाव\s+([^\s,।]+)/i);
+            if (matchMr) return matchMr[1].trim();
+
+            return currentUser ? currentUser.username : 'Anonymous';
+        }
+
+        // Extract roll number
+        function extractRoll(text) {
+            const hindiNumbers = {
+                'एक': '1', 'दो': '2', 'तीन': '3', 'चार': '4', 'पाँच': '5', 'पांच': '5',
+                'छह': '6', 'छः': '6', 'सात': '7', 'आठ': '8', 'नौ': '9', 'दस': '10',
+                'ग्यारह': '11', 'बारह': '12', 'तेरह': '13', 'चौदह': '14', 'पंद्रह': '15',
+                'दोन': '2', 'पाच': '5', 'सहा': '6', 'नऊ': '9', 'दहा': '10',
+                'अकरा': '11', 'बारा': '12', 'तेरा': '13', 'चौदा': '14', 'पंधरा': '15'
+            };
+
+            const match1 = text.match(/(?:roll\s*(?:no|number)|रोल\s*(?:नंबर|नम्बर|क्रमांक))\s*(?:है|आहे|:)?\s*(एक|दो|दोन|तीन|चार|पाँच|पांच|पाच|छह|छः|सहा|सात|आठ|नौ|नऊ|दस|दहा|ग्यारह|अकरा|बारह|बारा|तेरह|तेरा|चौदह|चौदा|पंद्रह|पंधरा)/i);
+            if (match1) {
+                const numText = match1[1].trim().toLowerCase();
+                return hindiNumbers[numText] || numText;
+            }
+
+            const match2 = text.match(/(?:roll\s*(?:no|number)|रोल\s*(?:नंबर|नम्बर|क्रमांक))\s*(?:है|आहे|:)?\s*([0-9]{1,5})/i);
+            if (match2) return match2[1].trim();
+
+            const match3 = text.match(/\b([0-9]{2,5})\b/);
+            return match3 ? match3[1] : null;
+        }
+
+        // Extract location
+        function extractLocation(text) {
+            const match1 = text.match(/([^\s,।]+)\s*(?:में|पर|पास|मध्ये|येथे|वर|ला)/i);
+            if (match1) {
+                let loc = match1[1].trim();
+                loc = loc.replace(/^(the|और|एक|आणि)\s*/i, '');
+                return loc;
+            }
+
+            const match2 = text.match(/(?:in|at)\s+(?:the\s+)?([a-zA-Z]+)/i);
+            if (match2) return match2[1].trim();
+
+            const locations = [
+                'हॉस्टल', 'वसतिगृह', 'hostel', 'mess', 'मेस', 'जेवणगृह',
+                'room', 'कमरा', 'रूम', 'खोली', 'classroom', 'कक्षा', 'वर्ग',
+                'library', 'पुस्तकालय', 'ग्रंथालय', 'canteen', 'कैंटीन', 'भोजनालय',
+                'washroom', 'toilet', 'शौचालय', 'स्वच्छतागृह', 'bathroom',
+                'corridor', 'गलियारा', 'रस्ता', 'कॉरिडोर'
+            ];
+
+            const lowerText = text.toLowerCase();
+            for (let loc of locations) {
+                if (lowerText.includes(loc.toLowerCase())) return loc;
+            }
+
+            return "Not specified";
+        }
+
+        // Detect complaint category and urgency
+        function detectComplaint(text) {
+            const originalText = text;
+            text = text.toLowerCase();
+
+            const categories = {
+                "सफाई/Cleaning/स्वच्छता": [
+                    "कचरा", "गंदगी", "सफाई", "कूड़ा", "नाली", "शौचालय", "टॉयलेट",
+                    "clean", "garbage", "dustbin", "safai", "kachra", "gandgi",
+                    "स्वच्छता", "कचरापेटी", "घाण", "स्वच्छतागृह", "dirty", "gandagi"
+                ],
+                "बिजली/Electricity/वीज": [
+                    "बिजली", "करंट", "मीटर", "लाइट", "पावर", "वोल्टेज", "बल्ब", "स्विच",
+                    "light", "electricity", "power", "bijli", "fan", "bulb",
+                    "वीज", "लाईट", "पंखा", "विजेचा", "दिवा"
+                ],
+                "पानी/Water/पाणी": [
+                    "पानी", "नल", "टंकी", "लीक", "जल", "सप्लाई", "ड्रेन", "पाइप",
+                    "water", "paani", "pipe", "tap",
+                    "पाणी", "नळ", "टाकी", "पाण्याचा"
+                ],
+                "सड़क/Road/रस्ता": [
+                    "सड़क", "गड्ढा", "ट्रैफिक", "सिग्नल", "रास्ता",
+                    "road", "pothole", "traffic",
+                    "रस्ता", "खड्डा", "वाहतूक"
+                ],
+                "इंटरनेट/Internet": [
+                    "इंटरनेट", "वाईफाई", "नेटवर्क", "कनेक्शन",
+                    "wifi", "internet", "network", "connection",
+                    "इंटरनेट", "वायफाय", "जाळे"
+                ],
+                "आग/Fire/अग्नी": [
+                    "आग", "धुआँ", "चिंगारी", "लपट", "जलना", "धधकना",
+                    "fire", "smoke", "burning",
+                    "अग्नी", "धूर", "ज्वाला", "जळणे"
+                ]
+            };
+
+            const urgentWords = [
+                "तुरंत", "जल्दी", "फौरन", "अभी",
+                "urgent", "immediately", "jaldi", "emergency", "turant",
+                "तात्काळ", "लगेच", "आत्ताच", "तातडीचे"
+            ];
+
+            let complaintType = "General";
+            let urgency = "Normal";
+            let maxMatches = 0;
+
+            for (let [cat, keywords] of Object.entries(categories)) {
+                let matches = 0;
+                for (let word of keywords) {
+                    const regex = new RegExp('\\b' + word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i');
+                    if (regex.test(originalText) || text.includes(word.toLowerCase())) {
+                        matches++;
+                    }
+                }
+                if (matches > maxMatches) {
+                    maxMatches = matches;
+                    complaintType = cat;
+                }
+            }
+
+            if (urgentWords.some(word => text.includes(word))) {
+                urgency = "High";
+            }
+
+            return {
+                complaint_type: complaintType,
+                urgency: urgency,
+                location: extractLocation(originalText),
+                details: originalText,
+                name: extractName(originalText),
+                roll: extractRoll(originalText)
+            };
+        }
+
+        // Generate email
+        function generateEmail(complaint, lang) {
+            const name = complaint.name;
+            const roll = complaint.roll;
+            const nameProvided = name && name.trim() !== "";
+            const rollProvided = roll && roll.trim() !== "";
+
+            const recipients = {
+                "सफाई/Cleaning/स्वच्छता": "cleaning_dept@college.edu",
+                "बिजली/Electricity/वीज": "electricity_dept@college.edu",
+                "पानी/Water/पाणी": "water_services@college.edu",
+                "सड़क/Road/रस्ता": "road_maintenance@college.edu",
+                "इंटरनेट/Internet": "it_support@college.edu",
+                "आग/Fire/अग्नी": "fire_safety@college.edu",
+                "General": "admin_office@college.edu"
+            };
+
+            let subject, body;
+
+            if (lang === 'mr-IN') {
+                subject = `${complaint.complaint_type} संदर्भात तक्रार`;
+                body = `आदरणीय महोदय/महोदया,
+
+विनम्र विनंती आहे की आमच्या परिसरात/क्षेत्रात खालील समस्या उद्भवत आहे. कृपया तपशील पहा:
+
+श्रेणी: ${complaint.complaint_type}
+स्थान: ${complaint.location}
+तातडीचे स्तर: ${complaint.urgency === 'High' ? 'उच्च' : 'सामान्य'}
+
+समस्येचे वर्णन:
+${complaint.details}
+
+ही समस्या विद्यार्थी आणि कर्मचाऱ्यांच्या दैनंदिन कामात अडथळा आणत आहे. म्हणून विनंती आहे की याबाबत त्वरित आवश्यक कार्यवाही करावी.
+
+सहकार्याबद्दल धन्यवाद.
+
+${nameProvided && rollProvided ?
+    `आपला विश्वासू,
+${name}
+रोल क्रमांक: ${roll}` :
+    `धन्यवाद,
+${name || 'अज्ञात'}`}`;
+            } else if (lang === 'hi-IN') {
+                subject = `${complaint.complaint_type} संबंधित शिकायत`;
+                body = `आदरणीय महोदय/महोदया,
+
+सविनय निवेदन है कि हमारे परिसर/क्षेत्र में निम्नलिखित समस्या उत्पन्न हो रही है। कृपया नीचे विवरण अवलोकन करें:
+
+श्रेणी: ${complaint.complaint_type}
+स्थान: ${complaint.location}
+आपातकाल स्तर: ${complaint.urgency === 'High' ? 'अधिक' : 'सामान्य'}
+
+समस्या का विवरण:
+${complaint.details}
+
+यह समस्या विद्यार्थियों और स्टाफ की दैनिक गतिविधियों को प्रभावित कर रही है। अतः आपसे विनम्र अनुरोध है कि इस पर शीघ्र आवश्यक कार्यवाही करें।
+
+आपके सहयोग के लिए धन्यवाद।
+
+${nameProvided && rollProvided ?
+    `भवदीय,
+${name}
+रोल नंबर: ${roll}` :
+    `धन्यवाद,
+${name || 'गुमनाम'}`}`;
+            } else {
+                subject = `Complaint Regarding ${complaint.complaint_type}`;
+                body = `Dear Sir/Madam,
+
+I would like to bring to your attention an issue occurring on our premises. Please find the details below:
+
+Category: ${complaint.complaint_type}
+Location: ${complaint.location}
+Urgency Level: ${complaint.urgency === 'High' ? 'High' : 'Normal'}
+
+Issue Description:
+${complaint.details}
+
+The issue is affecting students and staff's daily activities. Therefore, I kindly request you to take prompt action to resolve it.
+
+Thank you for your cooperation.
+
+${nameProvided && rollProvided ?
+    `Sincerely,
+${name}
+Roll No: ${roll}` :
+    `Sincerely,
+${name || 'Anonymous'}`}`;
+            }
+
+            const to = recipients[complaint.complaint_type] || recipients["General"];
+            return { to, subject, body };
+        }
+
+        // Copy email
+        function copyEmail() {
+            const emailText = document.getElementById('emailDraft').textContent;
+            navigator.clipboard.writeText(emailText).then(() => {
+                const btn = document.getElementById('copyBtn');
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    btn.textContent = '📋 Copy Email';
+                }, 2000);
+            });
+        }
+
+        // ==================== FILE UPLOAD FUNCTIONS ====================
+
+        function handleFileUpload(event) {
+            const files = Array.from(event.target.files);
+
+            files.forEach(file => {
+                if (file.size > 5 * 1024 * 1024) {
+                    alert(`File "${file.name}" is too large. Maximum size is 5MB.`);
+                    return;
+                }
+
+                const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/jpg', 'application/pdf',
+                    'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    'text/plain'];
+
+                if (!validTypes.includes(file.type)) {
+                    alert(`File "${file.name}" has an invalid type. Allowed types: images, PDF, Word documents, text files.`);
+                    return;
+                }
+
+                const fileId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    const fileData = {
+                        id: fileId,
+                        name: file.name,
+                        type: file.type,
+                        size: file.size,
+                        data: e.target.result,
+                        preview: file.type.startsWith('image/') ? e.target.result : null,
+                        uploadedAt: new Date().toISOString()
+                    };
+                    uploadedFiles.push(fileData);
+                    updateFilePreview();
+                };
+
+                reader.readAsDataURL(file);
+            });
+
+            event.target.value = '';
+        }
+
+        function updateFilePreview() {
+            const container = document.getElementById('filePreviewContainer');
+
+            if (uploadedFiles.length === 0) {
+                container.innerHTML = '<p style="color: #666; text-align: center;">No files attached</p>';
+                return;
+            }
+
+            let html = '<div class="file-preview-grid">';
+            uploadedFiles.forEach((file, index) => {
+                const fileSize = (file.size / 1024).toFixed(2) + ' KB';
+                const fileIcon = getFileIcon(file.type);
+
+                html += `
+                    <div class="file-preview-item" data-file-id="${file.id}">
+                        <button class="remove-file" onclick="removeFile(${index})">×</button>
+                        ${file.preview ?
+                            `<img src="${file.preview}" alt="${file.name}" onclick="viewImage('${index}')" style="cursor: pointer;">` :
+                            `<div style="font-size: 3em; color: #7f8c8d; cursor: pointer;" onclick="viewImage('${index}')">${fileIcon}</div>`
+                        }
+                        <div class="file-name" title="${file.name}">${truncateString(file.name, 15)}</div>
+                        <div class="file-size">${fileSize}</div>
+                        <div style="margin-top: 5px;">
+                            <button class="file-view-btn" onclick="viewImage('${index}')">👁️ View</button>
+                            <button class="file-download-btn" onclick="downloadFile(${index})">📥 Download</button>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function getFileIcon(fileType) {
+            if (fileType.startsWith('image/')) return '🖼️';
+            if (fileType === 'application/pdf') return '📄';
+            if (fileType.includes('word')) return '📝';
+            if (fileType === 'text/plain') return '📃';
+            return '📎';
+        }
+
+        function truncateString(str, maxLength) {
+            if (str.length <= maxLength) return str;
+            return str.substr(0, maxLength) + '...';
+        }
+
+        function viewImage(index) {
+            const file = uploadedFiles[index];
+            if (!file) {
+                alert('File not found');
+                return;
+            }
+
+            const modal = document.getElementById('imageViewModel');
+            const img = document.getElementById('fullSizeImage');
+            const imageInfo = document.getElementById('imageInfo');
+
+            if (file.preview) {
+                img.src = file.preview;
+                imageInfo.textContent = `${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
+                img.setAttribute('data-file-index', index);
+                img.setAttribute('data-filename', file.name);
+                modal.classList.add('active');
+                document.getElementById('fileModal').classList.remove('active');
+            } else {
+                alert('This file type cannot be previewed directly. Please use the download button.');
+            }
+        }
+
+        function downloadFile(index) {
+            const file = uploadedFiles[index];
+            if (!file) {
+                alert('File not found');
+                return;
+            }
+
+            if (!file.data) {
+                alert('File data not available');
+                return;
+            }
+
+            const link = document.createElement('a');
+            link.href = file.data;
+            link.download = file.name;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function downloadCurrentImage() {
+            const img = document.getElementById('fullSizeImage');
+            const fileIndex = img.getAttribute('data-file-index');
+
+            if (fileIndex !== null) {
+                downloadFile(parseInt(fileIndex));
+            } else {
+                const fileName = img.getAttribute('data-filename') || 'image.jpg';
+                const imageData = img.src;
+                const link = document.createElement('a');
+                link.href = imageData;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
+        function closeImageView() {
+            document.getElementById('imageViewModel').classList.remove('active');
+        }
+
+        function removeFile(index) {
+            if (confirm('Are you sure you want to remove this file?')) {
+                uploadedFiles.splice(index, 1);
+                updateFilePreview();
+            }
+        }
+
+        // ==================== GPS FUNCTIONS ====================
+
+        function getCurrentLocation() {
+            const locationBtn = document.getElementById('locationBtn');
+            const locationInfo = document.getElementById('locationInfo');
+
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser');
+                return;
+            }
+
+            locationBtn.innerHTML = '<span>📍</span> Detecting...';
+            locationBtn.classList.add('loading');
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    const accuracy = position.coords.accuracy;
+
+                    currentLocation = {
+                        latitude: lat,
+                        longitude: lng,
+                        accuracy: accuracy,
+                        timestamp: new Date().toISOString()
+                    };
+
+                    getAddressFromCoordinates(lat, lng).then(address => {
+                        document.getElementById('detectedLocation').textContent = address || 'Location detected';
+                        document.getElementById('location').textContent = address || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                        locationInfo.style.display = 'block';
+                        locationBtn.innerHTML = '<span>📍</span> Location Detected';
+                        locationBtn.classList.remove('loading');
+                        document.getElementById('locationCoordinates').textContent =
+                            `Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)} (Accuracy: ${Math.round(accuracy)} meters)`;
+                    });
+                },
+                (error) => {
+                    console.error('Error getting location:', error);
+                    locationBtn.innerHTML = '<span>📍</span> Detect My Location';
+                    locationBtn.classList.remove('loading');
+
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            alert('Location permission denied. Please enable location services.');
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            alert('Location information is unavailable.');
+                            break;
+                        case error.TIMEOUT:
+                            alert('Location request timed out.');
+                            break;
+                        default:
+                            alert('An unknown error occurred while getting location.');
+                    }
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+        }
+
+        async function getAddressFromCoordinates(lat, lng) {
+            try {
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
+                );
+                if (!response.ok) throw new Error('Geocoding failed');
+                const data = await response.json();
+
+                if (data && data.address) {
+                    const address = data.address;
+                    let addressParts = [];
+
+                    if (address.road) addressParts.push(address.road);
+                    if (address.suburb) addressParts.push(address.suburb);
+                    if (address.city || address.town || address.village) {
+                        addressParts.push(address.city || address.town || address.village);
+                    }
+                    if (address.state) addressParts.push(address.state);
+
+                    return addressParts.join(', ');
+                }
+                return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+            } catch (error) {
+                console.error('Geocoding error:', error);
+                return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+            }
+        }
+
+        // ==================== VIEW DETAILS FUNCTIONS ====================
+
+        function viewComplaintDetails(id) {
+            const complaint = complaints.find(c => c.id === id);
+            if (!complaint) return;
+
+            const detailsContent = document.getElementById('complaintDetailsContent');
+            const filesSection = document.getElementById('complaintFilesSection');
+            const filesList = document.getElementById('complaintFilesList');
+            const feedbackSection = document.getElementById('complaintFeedbackSection');
+            const feedbackDisplay = document.getElementById('feedbackDisplay');
+            const emailDraftSection = document.getElementById('complaintEmailDraft');
+            const fullEmailDraft = document.getElementById('fullEmailDraft');
+
+            const email = generateEmail(complaint, 'en-IN');
+
+            detailsContent.innerHTML = `
+                <div class="complaint-detail-item">
+                    <div class="complaint-detail-label">Complaint ID</div>
+                    <div class="complaint-detail-value">${complaint.id}</div>
+                </div>
+                <div class="complaint-detail-item">
+                    <div class="complaint-detail-label">User Name</div>
+                    <div class="complaint-detail-value">${complaint.user_name}</div>
+                </div>
+                <div class="complaint-detail-item">
+                    <div class="complaint-detail-label">Category</div>
+                    <div class="complaint-detail-value">${complaint.complaint_type}</div>
+                </div>
+                <div class="complaint-detail-item">
+                    <div class="complaint-detail-label">Location</div>
+                    <div class="complaint-detail-value">${complaint.location}</div>
+                </div>
+                <div class="complaint-detail-item">
+                    <div class="complaint-detail-label">Urgency</div>
+                    <div class="complaint-detail-value"><span class="${complaint.urgency === 'High' ? 'urgency-high' : 'urgency-normal'}">${complaint.urgency}</span></div>
+                </div>
+                <div class="complaint-detail-item">
+                    <div class="complaint-detail-label">Status</div>
+                    <div class="complaint-detail-value"><span class="status-badge status-${complaint.status}">${complaint.status.toUpperCase()}</span></div>
+                </div>
+                <div class="complaint-detail-item">
+                    <div class="complaint-detail-label">Roll Number</div>
+                    <div class="complaint-detail-value">${complaint.roll || 'Not provided'}</div>
+                </div>
+                <div class="complaint-detail-item" style="grid-column: span 2;">
+                    <div class="complaint-detail-label">Full Complaint Description</div>
+                    <div class="complaint-detail-value">${complaint.details}</div>
+                </div>
+                <div class="complaint-detail-item">
+                    <div class="complaint-detail-label">Submitted At</div>
+                    <div class="complaint-detail-value">${new Date(complaint.submitted_at).toLocaleString()}</div>
+                </div>
+                <div class="complaint-detail-item">
+                    <div class="complaint-detail-label">Last Updated</div>
+                    <div class="complaint-detail-value">${new Date(complaint.updated_at).toLocaleString()}</div>
+                </div>
+            `;
+
+            if (complaint.files && complaint.files.length > 0) {
+                let filesHtml = '<div class="file-modal-grid">';
+                complaint.files.forEach((file, index) => {
+                    const fileSize = (file.size / 1024).toFixed(2) + ' KB';
+                    const fileIcon = getFileIcon(file.type);
+
+                    filesHtml += `
+                        <div class="file-modal-item">
+                            ${file.preview ?
+                                `<img src="${file.url}" alt="${file.name}" onclick="viewStoredImage('${complaint.id}', ${index})">` :
+                                `<div style="font-size: 3em; color: #7f8c8d;">${fileIcon}</div>`
+                            }
+                            <div class="file-name">${truncateString(file.name, 20)}</div>
+                            <div class="file-size">${fileSize}</div>
+                            <div class="file-actions">
+                                ${file.preview ?
+                                    `<button class="file-view" onclick="viewStoredImage('${complaint.id}', ${index})">👁️ View</button>` :
+                                    `<button class="file-view" onclick="alert('Preview not available')">👁️ View</button>`
+                                }
+                                <button class="file-download" onclick="downloadStoredFile('${complaint.id}', ${index})">📥 Download</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                filesHtml += '</div>';
+                filesList.innerHTML = filesHtml;
+                filesSection.style.display = 'block';
+            } else {
+                filesSection.style.display = 'none';
+            }
+
+            if (complaint.rating || complaint.feedback) {
+                feedbackDisplay.innerHTML = `
+                    <div style="text-align: center;">
+                        <div style="margin-bottom: 10px;">
+                            ${Array(5).fill(0).map((_, i) =>
+                                `<span style="color: ${i < complaint.rating ? '#ffc107' : '#ddd'}; font-size: 2em;">★</span>`
+                            ).join('')}
+                            <span style="margin-left: 10px; font-weight: bold;">${complaint.rating}/5</span>
+                        </div>
+                        ${complaint.feedback ? `
+                            <div style="background: white; padding: 15px; border-radius: 8px;">
+                                <strong>Feedback:</strong> ${complaint.feedback}
+                            </div>
+                        ` : ''}
+                        ${complaint.feedback_submitted_at ? `
+                            <div style="margin-top: 10px; color: #666; font-size: 0.9em;">
+                                Submitted: ${new Date(complaint.feedback_submitted_at).toLocaleString()}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+                feedbackSection.style.display = 'block';
+            } else {
+                feedbackSection.style.display = 'none';
+            }
+
+            fullEmailDraft.textContent = `To: ${email.to}\n\nSubject: ${email.subject}\n\n${email.body}`;
+            emailDraftSection.style.display = 'block';
+
+            document.getElementById('complaintDetailsModal').style.display = 'flex';
+        }
+
+        function viewStoredImage(complaintId, fileIndex) {
+            const complaint = complaints.find(c => c.id === complaintId);
+            if (!complaint || !complaint.files || !complaint.files[fileIndex]) {
+                alert('File not found');
+                return;
+            }
+
+            const file = complaint.files[fileIndex];
+            if (file.url) {
+                const modal = document.getElementById('imageViewModel');
+                const img = document.getElementById('fullSizeImage');
+                const imageInfo = document.getElementById('imageInfo');
+
+                img.src = file.url;
+                imageInfo.textContent = `${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
+                modal.classList.add('active');
+                document.getElementById('fileModal').classList.remove('active');
+            } else {
+                alert('This file type cannot be previewed. Please use download.');
+            }
+        }
+
+        function downloadStoredFile(complaintId, fileIndex) {
+            const complaint = complaints.find(c => c.id === complaintId);
+            if (!complaint || !complaint.files || !complaint.files[fileIndex]) {
+                alert('File not found');
+                return;
+            }
+
+            const file = complaint.files[fileIndex];
+            if (file.url) {
+                const link = document.createElement('a');
+                link.href = file.url;
+                link.download = file.name;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                alert('File data not available');
+            }
+        }
+
+        function closeComplaintDetails() {
+            document.getElementById('complaintDetailsModal').style.display = 'none';
+        }
+
+        function closeFileModal() {
+            document.getElementById('fileModal').classList.remove('active');
+        }
+
+        // ==================== EXPORT FUNCTIONS ====================
+
+        function exportToPDF() {
+            exportComplaints('pdf');
+        }
+
+        function exportToExcel() {
+            exportComplaints('excel');
+        }
+
+        function exportComplaints(format = 'json') {
+            let dataStr, fileExtension;
+
+            if (format === 'excel') {
+                const headers = ['ID', 'User', 'Category', 'Location', 'Description', 'Urgency', 'Submitted Date', 'Status', 'Rating', 'Files Count'];
+                const rows = complaints.map(c => [
+                    c.id,
+                    c.user_name,
+                    c.complaint_type,
+                    c.location,
+                    c.details.replace(/"/g, '""'),
+                    c.urgency,
+                    new Date(c.submitted_at).toLocaleString(),
+                    c.status,
+                    c.rating || 'N/A',
+                    c.files ? c.files.length : 0
+                ]);
+
+                const csvContent = [headers.join(','), ...rows.map(row => row.map(cell => `"${cell}"`).join(','))].join('\n');
+                dataStr = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent);
+                fileExtension = 'csv';
+            } else {
+                const exportData = {
+                    complaints: complaints,
+                    exportedAt: new Date().toISOString(),
+                    totalComplaints: complaints.length,
+                };
+                dataStr = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(exportData, null, 2));
+                fileExtension = 'json';
+            }
+
+            const exportFileDefaultName = `complaints-export-${new Date().toISOString().slice(0,10)}.${fileExtension}`;
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataStr);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            alert(`Exporting as ${format.toUpperCase()}. File will be downloaded.`);
+        }
+
+        // ==================== ADMIN FUNCTIONS ====================
+
+        async function clearAllComplaints() {
+            if (confirm('Are you sure you want to clear ALL complaints? This action cannot be undone.')) {
+                complaints = [];
+                await loadComplaints();
+                alert('All complaints have been cleared.');
+            }
+        }
+
+        function viewUsers() {
+            alert('Users list - Implement users endpoint');
+        }
+
+        async function checkReminders() {
+            if (!isAdmin) return;
+
+            const result = await apiCall('/api/check-reminders/', 'POST');
+            if (result.success && result.reminders_sent > 0) {
+                alert(`Sent ${result.reminders_sent} reminders`);
+            } else {
+                alert('No reminders needed');
+            }
+        }
+
+        function requestNotificationPermission() {
+            if ("Notification" in window && Notification.permission === "default") {
+                Notification.requestPermission();
+            }
+        }
+
+        function startReminderChecker() {
+            setInterval(checkReminders, 60 * 60 * 1000);
+        }
+
+        function filterDashboardByDate() {
+            updateAdminDashboard();
+        }
+
+        // ==================== FEEDBACK MODULE FUNCTIONS ====================
+
+        async function updateFeedbackModule() {
+            if (!isAdmin) return;
+
+            const feedbackComplaints = complaints.filter(c => c.rating || c.feedback);
+            document.getElementById('totalFeedback').textContent = feedbackComplaints.length;
+
+            const avgRating = feedbackComplaints.length > 0
+                ? (feedbackComplaints.reduce((sum, c) => sum + (c.rating || 0), 0) / feedbackComplaints.length).toFixed(1)
+                : '0.0';
+
+            document.getElementById('avgRatingOverall').textContent = avgRating;
+            document.getElementById('pendingReview').textContent = feedbackComplaints.length;
+            document.getElementById('reviewedCount').textContent = '0';
+
+            filterFeedback();
+        }
+
+        let currentRatingFilter = 'all';
+        let currentDeptFilter = 'all';
+
+        function filterFeedbackByRating(rating, btn) {
+            currentRatingFilter = rating;
+            document.querySelectorAll('.feedback-filter-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            filterFeedback();
+        }
+
+        function filterFeedback() {
+            const deptFilter = document.getElementById('feedbackDepartmentFilter').value;
+            currentDeptFilter = deptFilter;
+
+            let filtered = complaints.filter(c => c.rating || c.feedback);
+
+            if (currentRatingFilter !== 'all') {
+                filtered = filtered.filter(c => c.rating == currentRatingFilter);
+            }
+
+            if (currentDeptFilter !== 'all') {
+                filtered = filtered.filter(c => c.complaint_type === currentDeptFilter);
+            }
+
+            const feedbackList = document.getElementById('feedbackList');
+            const emptyState = document.getElementById('feedbackEmptyState');
+
+            if (filtered.length === 0) {
+                feedbackList.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+
+            feedbackList.innerHTML = filtered.sort((a, b) =>
+                new Date(b.feedback_submitted_at || b.updated_at) - new Date(a.feedback_submitted_at || a.updated_at)
+            ).map(c => {
+                const ratingClass = c.rating >= 4 ? 'rating-high' : c.rating >= 3 ? 'rating-medium' : 'rating-low';
+                return `
+                    <div class="feedback-card">
+                        <div class="feedback-card-header">
+                            <span class="feedback-complaint-id">${c.id}</span>
+                            <div class="feedback-rating">
+                                ${Array(5).fill(0).map((_, i) =>
+                                    `<span class="feedback-star ${i < c.rating ? '' : 'empty'}">★</span>`
+                                ).join('')}
+                                <span class="rating-badge ${ratingClass}" style="margin-left: 10px;">${c.rating}/5</span>
+                            </div>
+                        </div>
+                        <div class="feedback-user-info">
+                            <span>👤 ${c.user_name}</span>
+                            <span>📁 ${c.complaint_type}</span>
+                            <span>📍 ${c.location}</span>
+                        </div>
+                        ${c.feedback ? `
+                            <div class="feedback-text">
+                                "${c.feedback}"
+                            </div>
+                        ` : ''}
+                        <div class="feedback-meta">
+                            <span>📅 Submitted: ${new Date(c.submitted_at).toLocaleDateString()}</span>
+                            ${c.feedback_submitted_at ?
+                                `<span>⭐ Feedback: ${new Date(c.feedback_submitted_at).toLocaleDateString()}</span>`
+                                : ''}
+                        </div>
+                        <div class="feedback-actions">
+                            <button class="view-complaint-btn" onclick="viewComplaintDetails('${c.id}')">
+                                👁️ View Complaint
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Close image view when clicking outside
+        document.addEventListener('click', function(event) {
+            const imageModal = document.getElementById('imageViewModel');
+            if (imageModal.classList.contains('active') &&
+                event.target === imageModal) {
+                closeImageView();
+            }
+        });
+    </script>
+</body>
+</html>
