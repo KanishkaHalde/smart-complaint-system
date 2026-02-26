@@ -2736,32 +2736,34 @@
         }
 
         // Logout
-        async function logout() {
-            if (confirm('Are you sure you want to logout?')) {
-                await fetch('/logout/');
-                isLoggedIn = false;
-                currentUser = null;
-                isAdmin = false;
-                sessionStorage.removeItem('currentUser');
+        // Logout - FIXED
+async function logout() {
+    if (confirm('Are you sure you want to logout?')) {
+        const result = await apiCall('/api/logout/', 'POST');
+        
+        isLoggedIn = false;
+        currentUser = null;
+        isAdmin = false;
+        sessionStorage.removeItem('currentUser');
 
-                document.getElementById('mainNavbar').style.display = 'none';
-                document.getElementById('mainContainer').style.display = 'none';
-                document.getElementById('loginModal').style.display = 'flex';
-                document.getElementById('adminLoginBtn').style.display = 'block';
+        document.getElementById('mainNavbar').style.display = 'none';
+        document.getElementById('mainContainer').style.display = 'none';
+        document.getElementById('loginModal').style.display = 'flex';
+        document.getElementById('adminLoginBtn').style.display = 'block';
 
-                // Reset forms
-                document.getElementById('userEmail').value = '';
-                document.getElementById('userPassword').value = '';
-                document.getElementById('adminUsername').value = '';
-                document.getElementById('adminPassword').value = '';
-                document.getElementById('regName').value = '';
-                document.getElementById('regEmail').value = '';
-                document.getElementById('regPassword').value = '';
-                document.getElementById('regConfirmPassword').value = '';
+        // Reset forms
+        document.getElementById('userEmail').value = '';
+        document.getElementById('userPassword').value = '';
+        document.getElementById('adminUsername').value = '';
+        document.getElementById('adminPassword').value = '';
+        document.getElementById('regName').value = '';
+        document.getElementById('regEmail').value = '';
+        document.getElementById('regPassword').value = '';
+        document.getElementById('regConfirmPassword').value = '';
 
-                switchLoginTab('user');
-            }
-        }
+        switchLoginTab('user');
+    }
+}
 
         // Show main application - FIXED
         function showMainApp() {
@@ -3757,7 +3759,7 @@
 
         // Extract location
         function extractLocation(text) {
-            const match1 = text.match(/([^\s,।]+)\s*(?:में|पर|पास|मध्ये|येथे|वर|ला)/i);
+            const match1 = text.match(/([^\s,।]+)\s*(?:में|पर|केपास|मध्ये|येथे|वर|ला)/i);
             if (match1) {
                 let loc = match1[1].trim();
                 loc = loc.replace(/^(the|और|एक|आणि)\s*/i, '');
@@ -4248,9 +4250,25 @@ ${name || 'Anonymous'}`}`;
                     <div class="complaint-detail-value">${complaint.complaint_type}</div>
                 </div>
                 <div class="complaint-detail-item">
-                    <div class="complaint-detail-label">Location</div>
-                    <div class="complaint-detail-value">${complaint.location}</div>
-                </div>
+            <div class="complaint-detail-label">Location</div>
+            <div class="complaint-detail-value">${complaint.location || "Not specified"}</div>
+        </div>
+
+        <!-- ✅ NEW LONGITUDE FIELD -->
+        <div class="complaint-detail-item">
+            <div class="complaint-detail-label">Longitude</div>
+            <div class="complaint-detail-value">
+                ${complaint.longitude ? complaint.longitude : "Not available"}
+            </div>
+        </div>
+
+        <!-- ✅ NEW LATITUDE FIELD -->
+        <div class="complaint-detail-item">
+            <div class="complaint-detail-label">Latitude</div>
+            <div class="complaint-detail-value">
+                ${complaint.latitude ? complaint.latitude : "Not available"}
+            </div>
+        </div>
                 <div class="complaint-detail-item">
                     <div class="complaint-detail-label">Urgency</div>
                     <div class="complaint-detail-value"><span class="${complaint.urgency === 'High' ? 'urgency-high' : 'urgency-normal'}">${complaint.urgency}</span></div>

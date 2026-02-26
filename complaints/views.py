@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django.utils import timezone
-from django.db.models import Avg, Count, Q  # IMPORT ADDED HERE
+from django.db.models import Avg, Count, Q
 from .models import Complaint, ComplaintFile, Notification
 import json
 import base64
@@ -35,14 +35,27 @@ def logout_view(request):
 
 @csrf_exempt
 def api_login(request):
-    """API endpoint for login"""
+    """API endpoint for login - FIXED to handle email login"""
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            username = data.get('username')
+            username_or_email = data.get('username')  # This can be either username or email
             password = data.get('password')
             
-            user = authenticate(request, username=username, password=password)
+            print(f"Login attempt with: {username_or_email}")
+            
+            user = None
+            
+            # Try to find user by email first
+            try:
+                user_obj = User.objects.get(email=username_or_email)
+                # Authenticate with username
+                user = authenticate(request, username=user_obj.username, password=password)
+                print(f"Found user by email: {user_obj.username}")
+            except User.DoesNotExist:
+                # If not found by email, try as username
+                user = authenticate(request, username=username_or_email, password=password)
+                print(f"Trying as username: {username_or_email}")
             
             if user is not None:
                 login(request, user)
@@ -61,33 +74,50 @@ def api_login(request):
                         'id': user.id,
                         'username': user.username,
                         'email': user.email,
-                        'is_admin': user.is_superuser
+                        'is_superuser': user.is_superuser,
+                        'is_admin': user.is_superuser  # For compatibility with frontend
                     }
                 })
             else:
-                return JsonResponse({'success': False, 'message': 'Invalid username or password'})
+                return JsonResponse({'success': False, 'message': 'Invalid email/username or password'})
         except Exception as e:
+            print(f"Login error: {str(e)}")
             return JsonResponse({'success': False, 'message': str(e)})
     
     return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
 @csrf_exempt
 def api_register(request):
-    """API endpoint for registration"""
+    """API endpoint for registration - FIXED"""
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            username = data.get('username')
+            username = data.get('username')  # This is name from frontend
             email = data.get('email')
             password = data.get('password')
             
-            if User.objects.filter(username=username).exists():
-                return JsonResponse({'success': False, 'message': 'Username already exists'})
+            print(f"Registration attempt - Username: {username}, Email: {email}")
             
+            # Validate input
+            if not username or not email or not password:
+                return JsonResponse({'success': False, 'message': 'All fields are required'})
+            
+            # Check if email already exists
             if User.objects.filter(email=email).exists():
                 return JsonResponse({'success': False, 'message': 'Email already exists'})
             
-            user = User.objects.create_user(username=username, email=email, password=password)
+            # Check if username already exists
+            if User.objects.filter(username=username).exists():
+                return JsonResponse({'success': False, 'message': 'Username already exists'})
+            
+            # Create user
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password
+            )
+            
+            print(f"User created successfully: {user.username}")
             
             # Create welcome notification
             Notification.objects.create(
@@ -106,10 +136,12 @@ def api_register(request):
                     'id': user.id,
                     'username': user.username,
                     'email': user.email,
-                    'is_admin': user.is_superuser
+                    'is_superuser': user.is_superuser,
+                    'is_admin': user.is_superuser  # For compatibility with frontend
                 }
             })
         except Exception as e:
+            print(f"Registration error: {str(e)}")
             return JsonResponse({'success': False, 'message': str(e)})
     
     return JsonResponse({'success': False, 'message': 'Invalid request method'})
@@ -133,29 +165,36 @@ def submit_complaint(request):
                 roll=data.get('roll', None)
             )
             
-            # Handle files if any
-            files = data.get('files', [])
-            for file_data in files:
-                # Decode base64 file
-                if file_data.get('data'):
-                    from django.core.files.base import ContentFile
-                    
-                    format, imgstr = file_data['data'].split(';base64,')
-                    file_content = ContentFile(base64.b64decode(imgstr), name=file_data['name'])
-                    
-                    ComplaintFile.objects.create(
-                        complaint=complaint,
-                        file=file_content,
-                        name=file_data['name']
-                    )
-            
-            # Handle GPS location
+            # Handle GPS location if provided
             gps = data.get('gpsLocation')
             if gps:
                 complaint.latitude = gps.get('latitude')
                 complaint.longitude = gps.get('longitude')
                 complaint.gps_accuracy = gps.get('accuracy')
                 complaint.save()
+            
+            # Handle files if any
+            files = data.get('files', [])
+            for file_data in files:
+                if file_data.get('data'):
+                    try:
+                        from django.core.files.base import ContentFile
+                        
+                        # Handle different base64 formats
+                        if ';base64,' in file_data['data']:
+                            format, imgstr = file_data['data'].split(';base64,')
+                        else:
+                            imgstr = file_data['data']
+                        
+                        file_content = ContentFile(base64.b64decode(imgstr), name=file_data['name'])
+                        
+                        ComplaintFile.objects.create(
+                            complaint=complaint,
+                            file=file_content,
+                            name=file_data['name']
+                        )
+                    except Exception as e:
+                        print(f"Error saving file {file_data.get('name')}: {str(e)}")
             
             # Create notification for user
             Notification.objects.create(
@@ -184,6 +223,7 @@ def submit_complaint(request):
             })
             
         except Exception as e:
+            print(f"Submit complaint error: {str(e)}")
             return JsonResponse({'success': False, 'message': str(e)})
     
     return JsonResponse({'success': False, 'message': 'Invalid request method'})
@@ -206,7 +246,8 @@ def get_complaints(request):
                 'id': f.id,
                 'name': f.name,
                 'url': f.file.url if f.file else None,
-                'type': f.file.name.split('.')[-1] if f.file else 'unknown'
+                'type': f.file.name.split('.')[-1] if f.file else 'unknown',
+                'size': f.file.size if f.file else 0
             } for f in c.files.all()]
             
             data.append({
@@ -214,6 +255,8 @@ def get_complaints(request):
                 'complaint_type': c.complaint_type,
                 'urgency': c.urgency,
                 'location': c.location,
+                'latitude': c.latitude,
+                'longitude': c.longitude,
                 'details': c.details,
                 'name': c.name,
                 'roll': c.roll,
@@ -224,14 +267,17 @@ def get_complaints(request):
                 'has_gps': bool(c.latitude and c.longitude),
                 'rating': c.rating,
                 'feedback': c.feedback,
+                'feedback_submitted_at': c.feedback_submitted_at.isoformat() if c.feedback_submitted_at else None,
                 'reopened': c.reopened,
                 'reopen_reason': c.reopen_reason,
+                'reopen_count': c.reopen_count,
                 'user_name': c.user.username,
                 'user_email': c.user.email
             })
         
         return JsonResponse({'success': True, 'complaints': data})
     except Exception as e:
+        print(f"Get complaints error: {str(e)}")
         return JsonResponse({'success': False, 'message': str(e)})
 
 @csrf_exempt
@@ -268,6 +314,7 @@ def update_status(request):
         except Complaint.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Complaint not found'})
         except Exception as e:
+            print(f"Update status error: {str(e)}")
             return JsonResponse({'success': False, 'message': str(e)})
     
     return JsonResponse({'success': False, 'message': 'Invalid request method'})
@@ -294,6 +341,7 @@ def delete_complaint(request):
         except Complaint.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Complaint not found'})
         except Exception as e:
+            print(f"Delete complaint error: {str(e)}")
             return JsonResponse({'success': False, 'message': str(e)})
     
     return JsonResponse({'success': False, 'message': 'Invalid request method'})
@@ -332,6 +380,7 @@ def submit_feedback(request):
         except Complaint.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Complaint not found'})
         except Exception as e:
+            print(f"Submit feedback error: {str(e)}")
             return JsonResponse({'success': False, 'message': str(e)})
     
     return JsonResponse({'success': False, 'message': 'Invalid request method'})
@@ -370,6 +419,7 @@ def reopen_complaint(request):
         except Complaint.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Complaint not found'})
         except Exception as e:
+            print(f"Reopen complaint error: {str(e)}")
             return JsonResponse({'success': False, 'message': str(e)})
     
     return JsonResponse({'success': False, 'message': 'Invalid request method'})
@@ -394,6 +444,7 @@ def get_notifications(request):
         
         return JsonResponse({'success': True, 'notifications': data})
     except Exception as e:
+        print(f"Get notifications error: {str(e)}")
         return JsonResponse({'success': False, 'message': str(e)})
 
 @csrf_exempt
@@ -415,11 +466,11 @@ def mark_notification_read(request):
         except Notification.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'Notification not found'})
         except Exception as e:
+            print(f"Mark notification read error: {str(e)}")
             return JsonResponse({'success': False, 'message': str(e)})
     
     return JsonResponse({'success': False, 'message': 'Invalid request method'})
 
-# ==================== FIXED DASHBOARD STATS FUNCTION ====================
 @login_required
 def get_dashboard_stats(request):
     """API endpoint to get dashboard statistics - FIXED"""
@@ -447,7 +498,7 @@ def get_dashboard_stats(request):
             cat = c.complaint_type
             categories[cat] = categories.get(cat, 0) + 1
         
-        # Average rating - FIXED: Using Avg from django.db.models (imported at top)
+        # Average rating
         rated = complaints.exclude(rating__isnull=True)
         avg_result = rated.aggregate(Avg('rating'))
         avg_rating = avg_result['rating__avg'] or 0
@@ -466,8 +517,7 @@ def get_dashboard_stats(request):
         
         return JsonResponse({'success': True, 'stats': stats})
     except Exception as e:
-        # Log the error for debugging
-        print(f"🔴 Error in get_dashboard_stats: {str(e)}")
+        print(f"Error in get_dashboard_stats: {str(e)}")
         return JsonResponse({'success': False, 'message': str(e)})
 
 @login_required
@@ -519,6 +569,7 @@ def get_admin_data(request):
             }
         })
     except Exception as e:
+        print(f"Get admin data error: {str(e)}")
         return JsonResponse({'success': False, 'message': str(e)})
 
 @login_required
@@ -572,8 +623,9 @@ def check_reminders(request):
             'message': f'Sent {reminders_sent} reminders'
         })
     except Exception as e:
+        print(f"Check reminders error: {str(e)}")
         return JsonResponse({'success': False, 'message': str(e)})
-    
+
 def get_user_session(request):
     """Check if user is logged in"""
     if request.user.is_authenticated:
@@ -583,7 +635,16 @@ def get_user_session(request):
                 'id': request.user.id,
                 'username': request.user.username,
                 'email': request.user.email,
-                'is_superuser': request.user.is_superuser
+                'is_superuser': request.user.is_superuser,
+                'is_admin': request.user.is_superuser  # For compatibility
             }
         })
     return JsonResponse({'is_authenticated': False})
+
+@csrf_exempt
+def api_logout(request):
+    """API endpoint for logout"""
+    if request.method == 'POST':
+        logout(request)
+        return JsonResponse({'success': True, 'message': 'Logged out successfully'})
+    return JsonResponse({'success': False, 'message': 'Invalid request method'})
